@@ -420,23 +420,30 @@ function UserFlow({ templates, onBack }) {
             <Toggle label="Ajouter un portrait" checked={user.showPhoto} onChange={()=>set("showPhoto",!user.showPhoto)}>
               <div style={{marginBottom:12}}>
                 <label style={{display:"block",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:GRAY,marginBottom:8}}>Photo</label>
-                <div style={{border:`2px dashed ${BORDER}`,borderRadius:8,padding:"16px",textAlign:"center",cursor:"pointer",background:LIGHT,transition:"border-color .15s"}}
-                  onClick={()=>fileRef.current?.click()}
-                  onMouseEnter={e=>e.currentTarget.style.borderColor=ROSE}
-                  onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}
-                  onDragOver={e=>e.preventDefault()}
-                  onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);}}>
-                  {(user.photoBase64||user.photoUrl)
-                    ?<img src={user.photoUrl||user.photoBase64} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:4,margin:"0 auto",display:"block"}}/>
-                    :<div style={{fontSize:11,color:GRAY,lineHeight:1.8}}>📷 Glisser une photo ici<br/>ou cliquer pour choisir</div>
-                  }
-                </div>
-                <input type="file" accept="image/*" ref={fileRef}
-                  onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);e.target.value="";}}
-                  style={{display:"none"}}/>
-                {user.photoBase64&&!user.photoUrl&&(
-                <UploadButton user={user} set={set} flash={flash}/>
-              )}
+                {(!user.firstName.trim()||!user.lastName.trim())
+                  ?<div style={{background:"#fffbeb",border:"1px solid #ffe082",borderRadius:8,padding:"10px 14px",fontSize:11,color:"#92400e"}}>
+                    Renseignez d'abord votre prénom et votre nom pour pouvoir ajouter un portrait.
+                  </div>
+                  :<>
+                    <div style={{border:`2px dashed ${BORDER}`,borderRadius:8,padding:"16px",textAlign:"center",cursor:"pointer",background:LIGHT,transition:"border-color .15s"}}
+                      onClick={()=>fileRef.current?.click()}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor=ROSE}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}
+                      onDragOver={e=>e.preventDefault()}
+                      onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);}}>
+                      {(user.photoBase64||user.photoUrl)
+                        ?<img src={user.photoUrl||user.photoBase64} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:4,margin:"0 auto",display:"block"}}/>
+                        :<div style={{fontSize:11,color:GRAY,lineHeight:1.8}}>📷 Glisser une photo ici<br/>ou cliquer pour choisir</div>
+                      }
+                    </div>
+                    <input type="file" accept="image/*" ref={fileRef}
+                      onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);e.target.value="";}}
+                      style={{display:"none"}}/>
+                    {user.photoBase64&&!user.photoUrl&&(
+                      <UploadButton user={user} set={set} flash={flash}/>
+                    )}
+                  </>
+                }
               </div>
               <Field label="Ou entrez une URL déjà hébergée">
                 <input style={INP} value={user.photoUrl} onChange={e=>set("photoUrl",e.target.value)} placeholder="https://…/portrait.jpg"/>
