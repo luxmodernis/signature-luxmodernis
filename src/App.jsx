@@ -293,13 +293,16 @@ function HomeScreen({ onChoice }) {
 const blankUser = { firstName:"", lastName:"", role:"", phone:"", showPhoto:false, photoUrl:"", photoBase64:null };
 
 // URL du script PHP d'upload — à mettre à jour quand l'emplacement sera fixé sur wesendapps
-async function uploadPortrait(base64, firstName, lastName) {
-  const first = (firstName || "").trim().charAt(0).toLowerCase();
-  const last  = (lastName  || "").trim().toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+const PHP_UPLOAD_URL = "https://wesendapps.com/LuxModernis/signature/upload-portrait.php";
+
+async function uploadToServer(base64, firstName, lastName) {
+  // Format : 1ère lettre du prénom + nom complet, ex: bsandrez
+  const first  = (firstName || "").trim().charAt(0).toLowerCase();
+  const last   = (lastName  || "").trim().toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "") // supprime accents
     .replace(/[^a-z]/g, "");
   const filename = (first + last) || "portrait";
-  const res = await fetch("/api/upload-portrait", {
+  const res = await fetch(PHP_UPLOAD_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ imageData: base64, filename }),
@@ -307,7 +310,7 @@ async function uploadPortrait(base64, firstName, lastName) {
   if (!res.ok) throw new Error(`Erreur serveur (${res.status})`);
   const data = await res.json();
   if (data.error) throw new Error(data.error);
-  return data.url.startsWith("http") ? data.url : window.location.origin + data.url;
+  return data.url;
 }
 
 function UploadButton({ user, set, flash }) {
@@ -315,9 +318,9 @@ function UploadButton({ user, set, flash }) {
   const upload = async () => {
     setLoading(true);
     try {
-      const url = await uploadPortrait(user.photoBase64, user.firstName, user.lastName);
+      const url = await uploadToServer(user.photoBase64, user.firstName, user.lastName);
       set("photoUrl", url);
-      flash("✓ Portrait hébergé sur wesendapps !", "ok");
+      flash("✓ Portrait hébergé et URL ajoutée automatiquement !", "ok");
     } catch(e) {
       flash("Erreur upload : " + e.message, "err");
     } finally { setLoading(false); }
@@ -589,13 +592,32 @@ export default function App() {
   const [ready,setReady]=useState(false);
 
   useEffect(()=>{
-    try{const s=localStorage.getItem("lm_tpl_v2");if(s)setTemplates(JSON.parse(s));}catch{}
-    setReady(true);
+    (async()=>{
+      try {
+        const res = await fetch("/api/get-templates");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) setTemplates(data);
+        }
+      } catch {
+        // fallback localStorage
+        try{const s=localStorage.getItem("lm_tpl_v2");if(s)setTemplates(JSON.parse(s));}catch{}
+      }
+      setReady(true);
+    })();
   },[]);
 
   const persist=async tpls=>{
     setTemplates(tpls);
-    try{localStorage.setItem("lm_tpl_v2",JSON.stringify(tpls));}catch{}
+    try {
+      await fetch("/api/save-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tpls),
+      });
+    } catch {
+      try{localStorage.setItem("lm_tpl_v2",JSON.stringify(tpls));}catch{}
+    }
   };
   const saveTpl=tpl=>{const e=templates.find(t=>t.id===tpl.id);persist(e?templates.map(t=>t.id===tpl.id?tpl:t):[...templates,tpl]);};
   const deleteTpl=id=>persist(templates.filter(t=>t.id!==id));
