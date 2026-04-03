@@ -69,7 +69,7 @@ function buildHTML(tpl, user) {
   if (fullName.trim())
     rows.push(`<tr><td style="padding:10px 0 0;font-family:Arial,sans-serif;font-size:14pt;font-weight:bold;color:#111;">${fullName}</td></tr>`);
   if (user.role)
-    rows.push(`<tr><td style="padding:4px 0 0;font-family:Arial,sans-serif;font-size:10pt;font-weight:normal;color:#333;">${titleCase(user.role)}</td></tr>`);
+    rows.push(`<tr><td style="padding:4px 0 0;font-family:Arial,sans-serif;font-size:10pt;font-weight:normal;color:#333;">${user.role}</td></tr>`);
   if (phone)
     rows.push(`<tr><td style="padding:3px 0 0;font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;color:#111;">${phone}</td></tr>`);
   if (tpl.showAddress && tpl.address)
