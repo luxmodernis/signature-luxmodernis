@@ -137,7 +137,7 @@ function Nav({ onBack, title, step }) {
 }
 
 /* ─── Aperçu signature ───────────────────────────────────────────────── */
-function SigPreview({ tpl, user }) {
+function SigPreview({ tpl, user, showPlaceholder=false }) {
   const photoSrc  = user.showPhoto ? (user.photoUrl || user.photoBase64 || "") : "";
   const hasPhoto  = !!photoSrc;
   const hasGif    = tpl.showGif && tpl.gifUrl;
@@ -157,10 +157,17 @@ function SigPreview({ tpl, user }) {
           ? <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0}}><img src={tpl.logoUrl} alt="Logo" height={SZ} style={{display:"block",height:SZ,width:"auto"}} /></a>
           : <img src={tpl.logoUrl} alt="Logo" height={SZ} style={{display:"block",height:SZ,width:"auto",flexShrink:0}} />
         }
-        {hasPhoto && (
-          <img src={photoSrc} alt={fullName} height={SZ}
-            style={{ display:"block", height:SZ, width:"auto", flexShrink:0 }}
-            />
+        {user.showPhoto && (
+          photoSrc
+            ? <img src={photoSrc} alt={fullName} height={SZ} style={{display:"block",height:SZ,width:"auto",flexShrink:0}}/>
+            : showPlaceholder
+              ? <div style={{width:SZ,height:SZ,flexShrink:0,background:"#ede9e4",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <svg width={SZ*0.45} height={SZ*0.45} viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" fill="#b8b0a8"/>
+                    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#b8b0a8" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+              : null
         )}
         {hasGif && (
           tpl.gifLinkUrl
@@ -295,12 +302,10 @@ const blankUser = { firstName:"", lastName:"", role:"", phone:"", showPhoto:fals
 async function uploadToServer(base64, firstName, lastName) {
   const first = (firstName || "").trim().charAt(0).toLowerCase();
   const last  = (lastName  || "").trim().toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z]/g, "");
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "");
   const filename = (first + last) || "portrait";
   const res = await fetch("/api/upload-portrait", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: "POST", headers: {"Content-Type":"application/json"},
     body: JSON.stringify({ imageData: base64, filename }),
   });
   if (!res.ok) throw new Error(`Erreur serveur (${res.status})`);
@@ -381,7 +386,7 @@ function UserFlow({ templates, onBack }) {
                 <div style={{fontWeight:600,fontSize:14,color:DARK,marginBottom:16}}>{t.name||"Template sans nom"}</div>
                 <div style={{overflow:"hidden",height:165,pointerEvents:"none"}}>
                   <div style={{transform:"scale(0.65)",transformOrigin:"top left",width:"154%"}}>
-                    <SigPreview tpl={t} user={{firstName:"Marie",lastName:"DUMONT",role:"Responsable communication",phone:"0612345678",showPhoto:false}}/>
+                    <SigPreview tpl={t} user={{firstName:"Marie",lastName:"DUMONT",role:"Responsable communication",phone:"0612345678",showPhoto:true}} showPlaceholder={true}/>
                   </div>
                 </div>
               </div>
@@ -397,9 +402,11 @@ function UserFlow({ templates, onBack }) {
       <Nav onBack={()=>{setStep("pick");setUser({...blankUser});}} title="Créer ma signature" step={`Template : ${tpl.name}`}/>
       {cropSrc&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.72)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
-          <div style={{background:WHITE,borderRadius:10,padding:28,maxWidth:420,width:"100%"}}>
-            <h3 style={{margin:"0 0 18px",fontFamily:"Georgia,serif",fontSize:20,color:DARK}}>Recadrer le portrait</h3>
+          <div style={{background:WHITE,borderRadius:10,padding:24,maxWidth:420,width:"100%",maxHeight:"90vh",overflowY:"auto"}}>
+            <h3 style={{margin:"0 0 14px",fontFamily:"Georgia,serif",fontSize:18,color:DARK}}>Recadrer le portrait</h3>
+            <div style={{maxHeight:"60vh",overflowY:"auto"}}>
             <Cropper src={cropSrc} onConfirm={b64=>{set("photoBase64",b64);setCropSrc(null);}} onCancel={()=>setCropSrc(null)}/>
+            </div>
           </div>
         </div>
       )}
@@ -416,30 +423,23 @@ function UserFlow({ templates, onBack }) {
             <Toggle label="Ajouter un portrait" checked={user.showPhoto} onChange={()=>set("showPhoto",!user.showPhoto)}>
               <div style={{marginBottom:12}}>
                 <label style={{display:"block",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:GRAY,marginBottom:8}}>Photo</label>
-                {(!user.firstName.trim()||!user.lastName.trim())
-                  ?<div style={{background:"#fffbeb",border:"1px solid #ffe082",borderRadius:8,padding:"10px 14px",fontSize:11,color:"#92400e"}}>
-                    Renseignez d'abord votre prénom et votre nom pour pouvoir ajouter un portrait.
-                  </div>
-                  :<>
-                    <div style={{border:`2px dashed ${BORDER}`,borderRadius:8,padding:"16px",textAlign:"center",cursor:"pointer",background:LIGHT,transition:"border-color .15s"}}
-                      onClick={()=>fileRef.current?.click()}
-                      onMouseEnter={e=>e.currentTarget.style.borderColor=ROSE}
-                      onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}
-                      onDragOver={e=>e.preventDefault()}
-                      onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);}}>
-                      {(user.photoBase64||user.photoUrl)
-                        ?<img src={user.photoUrl||user.photoBase64} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:4,margin:"0 auto",display:"block"}}/>
-                        :<div style={{fontSize:11,color:GRAY,lineHeight:1.8}}>📷 Glisser une photo ici<br/>ou cliquer pour choisir</div>
-                      }
-                    </div>
-                    <input type="file" accept="image/*" ref={fileRef}
-                      onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);e.target.value="";}}
-                      style={{display:"none"}}/>
-                    {user.photoBase64&&!user.photoUrl&&(
-                      <UploadButton user={user} set={set} flash={flash}/>
-                    )}
-                  </>
-                }
+                <div style={{border:`2px dashed ${BORDER}`,borderRadius:8,padding:"16px",textAlign:"center",cursor:"pointer",background:LIGHT,transition:"border-color .15s"}}
+                  onClick={()=>fileRef.current?.click()}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor=ROSE}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}
+                  onDragOver={e=>e.preventDefault()}
+                  onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);}}>
+                  {(user.photoBase64||user.photoUrl)
+                    ?<img src={user.photoUrl||user.photoBase64} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:4,margin:"0 auto",display:"block"}}/>
+                    :<div style={{fontSize:11,color:GRAY,lineHeight:1.8}}>📷 Glisser une photo ici<br/>ou cliquer pour choisir</div>
+                  }
+                </div>
+                <input type="file" accept="image/*" ref={fileRef}
+                  onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);e.target.value="";}}
+                  style={{display:"none"}}/>
+                {user.photoBase64&&!user.photoUrl&&(
+                <UploadButton user={user} set={set} flash={flash}/>
+              )}
               </div>
               <Field label="Ou entrez une URL déjà hébergée">
                 <input style={INP} value={user.photoUrl} onChange={e=>set("photoUrl",e.target.value)} placeholder="https://…/portrait.jpg"/>
@@ -518,7 +518,7 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
                 </div>
                 <div style={{overflow:"hidden",height:165,pointerEvents:"none"}}>
                   <div style={{transform:"scale(0.65)",transformOrigin:"top left",width:"154%"}}>
-                    <SigPreview tpl={t} user={{firstName:"Marie",lastName:"DUMONT",role:"Responsable communication",phone:"0612345678",showPhoto:false}}/>
+                    <SigPreview tpl={t} user={{firstName:"Marie",lastName:"DUMONT",role:"Responsable communication",phone:"0612345678",showPhoto:true}} showPlaceholder={true}/>
                   </div>
                 </div>
               </div>
@@ -580,7 +580,7 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
         <div style={{flex:1,overflowY:"auto",padding:"32px 40px",background:LIGHT}}>
           <p style={{margin:"0 0 20px",fontSize:11,color:"#bbb",fontStyle:"italic"}}>Aperçu avec données factices — chaque membre remplira ses propres informations</p>
           <div style={{background:WHITE,border:`1px solid ${BORDER}`,borderRadius:10,padding:"28px 32px",display:"inline-block"}}>
-            <SigPreview tpl={editing} user={{firstName:"Marie",lastName:"DUMONT",role:"Responsable communication",phone:"0612345678",showPhoto:false}}/>
+            <SigPreview tpl={editing} user={{firstName:"Marie",lastName:"DUMONT",role:"Responsable communication",phone:"0612345678",showPhoto:true}} showPlaceholder={true}/>
           </div>
         </div>
       </div>
@@ -598,12 +598,8 @@ export default function App() {
     (async()=>{
       try {
         const res = await fetch("/api/get-templates");
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) setTemplates(data);
-        }
+        if (res.ok) { const data = await res.json(); if (Array.isArray(data)) setTemplates(data); }
       } catch {
-        // fallback localStorage
         try{const s=localStorage.getItem("lm_tpl_v2");if(s)setTemplates(JSON.parse(s));}catch{}
       }
       setReady(true);
@@ -614,13 +610,9 @@ export default function App() {
     setTemplates(tpls);
     try {
       await fetch("/api/save-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tpls),
+        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(tpls)
       });
-    } catch {
-      try{localStorage.setItem("lm_tpl_v2",JSON.stringify(tpls));}catch{}
-    }
+    } catch { try{localStorage.setItem("lm_tpl_v2",JSON.stringify(tpls));}catch{} }
   };
   const saveTpl=tpl=>{const e=templates.find(t=>t.id===tpl.id);persist(e?templates.map(t=>t.id===tpl.id?tpl:t):[...templates,tpl]);};
   const deleteTpl=id=>persist(templates.filter(t=>t.id!==id));
