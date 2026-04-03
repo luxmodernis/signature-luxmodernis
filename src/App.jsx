@@ -330,11 +330,12 @@ function Cropper({ src, onConfirm, onCancel }) {
     if (!img || !crop) return;
     const sc = scaleRef.current;
     const out = document.createElement("canvas");
-    out.width = SZ; out.height = SZ;
+    const EXPORT = SZ * 2; // 2× pour les écrans Retina
+    out.width = EXPORT; out.height = EXPORT;
     // On ramène les coords display → coords image originale
     out.getContext("2d").drawImage(img,
       crop.x / sc, crop.y / sc, crop.s / sc, crop.s / sc,
-      0, 0, SZ, SZ
+      0, 0, EXPORT, EXPORT
     );
     onConfirm(out.toDataURL("image/jpeg", .9));
   };
@@ -433,6 +434,7 @@ function UserFlow({ templates, onBack }) {
   const [user,setUser]=useState({...blankUser}); const [cropSrc,setCropSrc]=useState(null);
   const [msg,setMsg]=useState(""); const [msgType,setMsgType]=useState("ok");
   const [measuredGifW,setMeasuredGifW]=useState(0);
+  const [existingPortrait,setExistingPortrait]=useState(null); // URL si portrait déjà hébergé
   const fileRef=useRef(null);
 
   // Mesure le GIF dès qu'un template est sélectionné
@@ -442,6 +444,22 @@ function UserFlow({ templates, onBack }) {
     img.onload=()=>setMeasuredGifW(Math.round(img.naturalWidth*(SZ/img.naturalHeight)));
     img.src=tpl.gifUrl;
   },[tpl]);
+
+  // Détecte un portrait existant quand prénom + nom sont remplis
+  useEffect(()=>{
+    const first=(user.firstName||"").trim().charAt(0).toLowerCase();
+    const last=(user.lastName||"").trim().toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,"");
+    if(!first||!last){setExistingPortrait(null);return;}
+    const url=`/api/portrait/${first}${last}.jpg`;
+    const timer=setTimeout(async()=>{
+      try{
+        const res=await fetch(url,{method:"HEAD"});
+        setExistingPortrait(res.ok ? url : null);
+      }catch{ setExistingPortrait(null); }
+    },600); // délai pour éviter les requêtes à chaque frappe
+    return ()=>clearTimeout(timer);
+  },[user.firstName,user.lastName]);
   const flash=(t,k="ok")=>{setMsg(t);setMsgType(k);setTimeout(()=>setMsg(""),5500);};
   const set=(k,v)=>setUser(u=>({...u,[k]:v}));
 
