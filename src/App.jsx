@@ -138,7 +138,7 @@ function Nav({ onBack, title, step }) {
 
 /* ─── Aperçu signature ───────────────────────────────────────────────── */
 function SigPreview({ tpl, user, showPlaceholder=false }) {
-  const photoSrc  = user.showPhoto ? (user.photoUrl || user.photoBase64 || "") : "";
+  const photoSrc  = user.showPhoto ? (user.photoBase64 || user.photoUrl || "") : "";
   const hasPhoto  = !!photoSrc;
   const hasGif    = tpl.showGif && tpl.gifUrl;
   const firstName = titleCase(user.firstName);
@@ -416,7 +416,6 @@ function UploadButton({ user, set, flash }) {
     try {
       const url = await uploadToServer(user.photoBase64, user.firstName, user.lastName);
       set("photoUrl", url);
-      set("photoBase64", null); // force l'aperçu à recharger depuis l'URL Netlify
       flash("✓ Portrait hébergé et URL ajoutée automatiquement !", "ok");
     } catch(e) {
       flash("Erreur upload : " + e.message, "err");
