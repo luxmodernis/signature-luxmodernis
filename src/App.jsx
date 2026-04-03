@@ -40,7 +40,7 @@ function buildHTML(tpl, user) {
   const lastName  = upperCase(user.lastName);
   const fullName  = `${firstName} ${lastName}`.trim();
   const phone     = formatPhone(user.phone);
-  const photoSrc  = user.showPhoto ? (user.photoUrl || "") : "";
+  const photoSrc  = user.showPhoto ? (user.photoUrl ? user.photoUrl + (user.photoUrl.includes("?") ? "&" : "?") + "v=" + Date.now() : "") : "";
   const hasPhoto  = !!photoSrc;
   const hasGif    = tpl.showGif && tpl.gifUrl;
   const liIcon    = tpl.liIconUrl || DEFAULT_LI_ICON;
