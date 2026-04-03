@@ -478,15 +478,6 @@ function UserFlow({ templates, onBack }) {
   const set=(k,v)=>setUser(u=>({...u,[k]:v}));
 
   const copy=async()=>{
-    // Sauvegarde du profil si clé connue
-    if(profileKey){
-      try{
-        await fetch("/api/save-profile",{
-          method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({key:profileKey,role:user.role,phone:user.phone})
-        });
-      }catch{}
-    }
     const hasLocal=user.showPhoto&&user.photoBase64&&!user.photoUrl;
     if(hasLocal){flash("⚠ Photo locale — uploadez-la et entrez l'URL pour qu'elle s'affiche chez vos destinataires.","warn");return;}
     const activeTpl = measuredGifW>0 ? {...tpl,gifWidth:measuredGifW} : tpl;
@@ -494,6 +485,8 @@ function UserFlow({ templates, onBack }) {
     try{
       await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"})})]);
       flash("✓ Signature copiée ! Collez-la dans votre client mail.","ok");
+    // Sauvegarde profil en arrière-plan (fire and forget)
+    if(profileKey) fetch("/api/save-profile",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:profileKey,role:user.role,phone:user.phone})}).catch(()=>{});
     }catch{
       try{
         const d=document.createElement("div");d.innerHTML=html;d.style.cssText="position:fixed;left:-9999px";
@@ -501,6 +494,7 @@ function UserFlow({ templates, onBack }) {
         window.getSelection().removeAllRanges();window.getSelection().addRange(r);
         document.execCommand("copy");window.getSelection().removeAllRanges();document.body.removeChild(d);
         flash("✓ Signature copiée !","ok");
+        if(profileKey) fetch("/api/save-profile",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:profileKey,role:user.role,phone:user.phone})}).catch(()=>{});
       }catch{flash("Impossible de copier automatiquement.","err");}
     }
   };
@@ -603,9 +597,7 @@ function UserFlow({ templates, onBack }) {
           </div>
           <div style={{marginTop:16,background:LIGHT,borderRadius:8,padding:"14px 16px",fontSize:11,color:GRAY,lineHeight:1.9}}>
             <div style={{fontWeight:600,color:"#555",marginBottom:8,fontSize:12}}>Coller dans votre client mail</div>
-            <b>Gmail :</b> Paramètres → Signature → <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘V</kbd><br/>
-            <b>Apple Mail :</b> Mail → Préférences → Signatures<br/>
-            <div style={{marginTop:6}}><b>Outlook Windows :</b> Paramètres → Signatures → + Nouvelle Signature → Clic droit &gt; Coller ou <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>Ctrl+V</kbd> dans le champ texte → Enregistrer</div>
+            <div style={{marginTop:0}}><b>Outlook Windows :</b> Paramètres → Signatures → + Nouvelle Signature → Clic droit &gt; Coller ou <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>Ctrl+V</kbd> dans le champ texte → Enregistrer</div>
             <div style={{marginTop:4}}><b>Outlook Mac :</b> Signature → Gérer les signatures → cliquez sur <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>+</kbd> → Nommez la signature → Clic droit + Coller ou <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘V</kbd> dans le champ → Dans "Choisir une signature par défaut" sélectionnez votre signature</div>
           </div>
         </div>
