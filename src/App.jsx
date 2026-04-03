@@ -435,6 +435,7 @@ function UserFlow({ templates, onBack }) {
   const [msg,setMsg]=useState(""); const [msgType,setMsgType]=useState("ok");
   const [measuredGifW,setMeasuredGifW]=useState(0);
   const [existingPortrait,setExistingPortrait]=useState(null); // URL si portrait déjà hébergé
+  const [profileKey,setProfileKey]=useState(""); // clé du profil (ex: bsandrez)
   const fileRef=useRef(null);
 
   // Mesure le GIF dès qu'un template est sélectionné
@@ -452,18 +453,40 @@ function UserFlow({ templates, onBack }) {
       .normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,"");
     if(!first||!last){setExistingPortrait(null);return;}
     const url=`/api/portrait/${first}${last}.jpg`;
-    const timer=setTimeout(()=>{
+    const timer=setTimeout(async()=>{
+      // Détection portrait
       const img=new Image();
       img.onload=()=>setExistingPortrait(url);
       img.onerror=()=>setExistingPortrait(null);
-      img.src=url+"?check="+Date.now(); // évite le cache navigateur pour la détection
+      img.src=url+"?check="+Date.now();
+      // Détection profil (poste + téléphone)
+      try{
+        const res=await fetch(`/api/profile/${key}`);
+        if(res.ok){
+          const profile=await res.json();
+          if(profile&&(profile.role||profile.phone)){
+            if(!user.role&&profile.role) set("role",profile.role);
+            if(!user.phone&&profile.phone) set("phone",profile.phone);
+          }
+        }
+      }catch{}
     },800);
+    setProfileKey(key);
     return ()=>clearTimeout(timer);
   },[user.firstName,user.lastName,user.photoUrl]);
   const flash=(t,k="ok")=>{setMsg(t);setMsgType(k);setTimeout(()=>setMsg(""),5500);};
   const set=(k,v)=>setUser(u=>({...u,[k]:v}));
 
   const copy=async()=>{
+    // Sauvegarde du profil si clé connue
+    if(profileKey){
+      try{
+        await fetch("/api/save-profile",{
+          method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({key:profileKey,role:user.role,phone:user.phone})
+        });
+      }catch{}
+    }
     const hasLocal=user.showPhoto&&user.photoBase64&&!user.photoUrl;
     if(hasLocal){flash("⚠ Photo locale — uploadez-la et entrez l'URL pour qu'elle s'affiche chez vos destinataires.","warn");return;}
     const activeTpl = measuredGifW>0 ? {...tpl,gifWidth:measuredGifW} : tpl;
