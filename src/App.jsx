@@ -46,17 +46,23 @@ function buildHTML(tpl, user) {
   const liIcon    = tpl.liIconUrl || DEFAULT_LI_ICON;
   const igIcon    = tpl.igIconUrl || DEFAULT_IG_ICON;
 
-  // Uniquement height="SZ" — Outlook calcule la largeur naturelle seul.
-  // Aucun width sur les images = hauteur toujours exacte, proportions garanties.
-  const logoImgTag = `<img src="${tpl.logoUrl}" height="${SZ}" alt="Logo" style="display:block;border:0;" />`;
-  const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="display:block;line-height:0;">${logoImgTag}</a>` : logoImgTag;
-  const gifImgTag  = `<img src="${tpl.gifUrl}"  height="${SZ}" alt=""     style="display:block;border:0;" />`;
-  const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}"  style="display:block;line-height:0;">${gifImgTag}</a>`  : gifImgTag;
+  // Largeurs pour le calcul fluide mobile
+  const gifW   = hasGif ? (tpl.gifWidth || SZ * 2) : 0;
+  const totalW = SZ + (hasPhoto ? SZ : 0) + gifW;
+  const logoPct  = Math.round(SZ / totalW * 100);
+  const photoPct = hasPhoto ? Math.round(SZ / totalW * 100) : 0;
+  const gifPct   = hasGif ? (100 - logoPct - photoPct) : 0;
 
-  const imageTable = `<table cellpadding="0" cellspacing="0" border="0"><tbody><tr>
-  <td style="padding:0;vertical-align:top;line-height:0;">${logoCell}</td>${hasPhoto ? `
-  <td style="padding:0;vertical-align:top;line-height:0;"><img src="${photoSrc}" height="${SZ}" alt="${fullName}" style="display:block;border:0;" /></td>` : ""}${hasGif ? `
-  <td style="padding:0;vertical-align:top;line-height:0;">${gifCell}</td>` : ""}
+  // Double couche : attributs HTML (Outlook desktop) + CSS width:100%;height:auto (mobile)
+  const logoImgTag = `<img src="${tpl.logoUrl}" width="${SZ}" height="${SZ}" alt="Logo" style="display:block;width:100%;height:auto;border:0;" />`;
+  const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="display:block;line-height:0;">${logoImgTag}</a>` : logoImgTag;
+  const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${SZ}" alt="" style="display:block;width:100%;height:auto;border:0;" />`;
+  const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="display:block;line-height:0;">${gifImgTag}</a>` : gifImgTag;
+
+  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="width:100%;max-width:${totalW}px;"><tbody><tr>
+  <td width="${SZ}" style="padding:0;vertical-align:top;line-height:0;width:${logoPct}%;">${logoCell}</td>${hasPhoto ? `
+  <td width="${SZ}" style="padding:0;vertical-align:top;line-height:0;width:${photoPct}%;"><img src="${photoSrc}" width="${SZ}" height="${SZ}" alt="${fullName}" style="display:block;width:100%;height:auto;border:0;" /></td>` : ""}${hasGif ? `
+  <td width="${gifW}" style="padding:0;vertical-align:top;line-height:0;width:${gifPct}%;">${gifCell}</td>` : ""}
 </tr></tbody></table>`;
 
   const rows = [];
