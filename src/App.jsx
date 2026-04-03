@@ -405,7 +405,8 @@ async function uploadToServer(base64, firstName, lastName) {
   if (!res.ok) throw new Error(`Erreur serveur (${res.status})`);
   const data = await res.json();
   if (data.error) throw new Error(data.error);
-  return data.url.startsWith("http") ? data.url : window.location.origin + data.url;
+  const base = data.url.startsWith("http") ? data.url : window.location.origin + data.url;
+  return base + "?v=" + Date.now();
 }
 
 function UploadButton({ user, set, flash }) {
