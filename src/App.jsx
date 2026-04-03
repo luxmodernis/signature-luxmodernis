@@ -526,7 +526,7 @@ function UserFlow({ templates, onBack }) {
           <Flash msg={msg} type={msgType}/>
           <Field label="Prénom"><input style={INP} value={user.firstName} onChange={e=>set("firstName",titleCase(e.target.value))} placeholder="Marie"/></Field>
           <Field label="Nom"><input style={INP} value={user.lastName} onChange={e=>set("lastName",upperCase(e.target.value))} placeholder="DUMONT"/></Field>
-          <Field label="Poste"><input style={INP} value={user.role} onChange={e=>set("role",titleCase(e.target.value))} placeholder="Responsable Communication"/></Field>
+          <Field label="Poste"><input style={INP} value={user.role} onChange={e=>set("role",e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1))} placeholder="Responsable communication"/></Field>
           <Field label="Téléphone">
             <input style={INP} value={formatPhone(user.phone)} onChange={e=>set("phone",e.target.value.replace(/\D/g,""))} placeholder="06 12 34 56 78"/>
           </Field>
@@ -539,7 +539,7 @@ function UserFlow({ templates, onBack }) {
                   <span>Un portrait existe déjà pour ce nom.</span>
                 </div>
                 <div style={{display:"flex",gap:6}}>
-                  <button onClick={()=>{set("photoUrl",existingPortrait);set("showPhoto",true);}} style={{...gs("ghost"),fontSize:10,padding:"5px 10px"}}>
+                  <button onClick={()=>{set("photoUrl", existingPortrait.startsWith("http") ? existingPortrait : window.location.origin + existingPortrait); set("showPhoto",true);}} style={{...gs("ghost"),fontSize:10,padding:"5px 10px"}}>
                     Utiliser ce portrait
                   </button>
                   <button onClick={()=>{set("showPhoto",true);setTimeout(()=>fileRef.current?.click(),50);}} style={{...gs("ghost"),fontSize:10,padding:"5px 10px"}}>
