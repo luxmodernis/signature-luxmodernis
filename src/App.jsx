@@ -539,14 +539,14 @@ function UserFlow({ templates, onBack }) {
                   onMouseEnter={e=>e.currentTarget.style.borderColor=ROSE}
                   onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}
                   onDragOver={e=>e.preventDefault()}
-                  onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);}}>
+                  onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith("image/"))return;set("photoUrl","");const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);}}>
                   {(user.photoBase64||user.photoUrl)
                     ?<img src={user.photoUrl||user.photoBase64} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:4,margin:"0 auto",display:"block"}}/>
                     :<div style={{fontSize:11,color:GRAY,lineHeight:1.8}}>📷 Glisser une photo ici<br/>ou cliquer pour choisir</div>
                   }
                 </div>
                 <input type="file" accept="image/*" ref={fileRef}
-                  onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);e.target.value="";}}
+                  onChange={e=>{const f=e.target.files[0];if(!f)return;set("photoUrl","");const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);e.target.value="";}}
                   style={{display:"none"}}/>
                 {user.photoBase64&&!user.photoUrl&&(
                 <UploadButton user={user} set={set} flash={flash}/>
