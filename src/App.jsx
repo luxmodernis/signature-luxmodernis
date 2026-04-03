@@ -405,8 +405,7 @@ async function uploadToServer(base64, firstName, lastName) {
   if (!res.ok) throw new Error(`Erreur serveur (${res.status})`);
   const data = await res.json();
   if (data.error) throw new Error(data.error);
-  const base = data.url.startsWith("http") ? data.url : window.location.origin + data.url;
-  return base + "?v=" + Date.now();
+  return data.url.startsWith("http") ? data.url : window.location.origin + data.url;
 }
 
 function UploadButton({ user, set, flash }) {
@@ -453,12 +452,12 @@ function UserFlow({ templates, onBack }) {
       .normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,"");
     if(!first||!last){setExistingPortrait(null);return;}
     const url=`/api/portrait/${first}${last}.jpg`;
-    const timer=setTimeout(async()=>{
-      try{
-        const res=await fetch(url,{method:"HEAD"});
-        setExistingPortrait(res.ok ? url : null);
-      }catch{ setExistingPortrait(null); }
-    },600); // délai pour éviter les requêtes à chaque frappe
+    const timer=setTimeout(()=>{
+      const img=new Image();
+      img.onload=()=>setExistingPortrait(url);
+      img.onerror=()=>setExistingPortrait(null);
+      img.src=url+"?check="+Date.now(); // évite le cache navigateur pour la détection
+    },800);
     return ()=>clearTimeout(timer);
   },[user.firstName,user.lastName,user.photoUrl]);
   const flash=(t,k="ok")=>{setMsg(t);setMsgType(k);setTimeout(()=>setMsg(""),5500);};
@@ -532,6 +531,23 @@ function UserFlow({ templates, onBack }) {
             <input style={INP} value={formatPhone(user.phone)} onChange={e=>set("phone",e.target.value.replace(/\D/g,""))} placeholder="06 12 34 56 78"/>
           </Field>
           <div style={{marginTop:20}}>
+            {/* Suggestion portrait existant */}
+            {existingPortrait&&!user.photoUrl&&!user.photoBase64&&(
+              <div style={{background:"#f0fff6",border:"1px solid #a8e6be",borderRadius:8,padding:"12px 14px",marginBottom:12,fontSize:11,color:"#1a5c35"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <img src={existingPortrait} alt="" style={{width:40,height:40,objectFit:"cover",borderRadius:4,border:"1px solid #a8e6be"}}/>
+                  <span>Un portrait existe déjà pour ce nom.</span>
+                </div>
+                <div style={{display:"flex",gap:6}}>
+                  <button onClick={()=>{set("photoUrl",existingPortrait);set("showPhoto",true);}} style={{...gs("ghost"),fontSize:10,padding:"5px 10px"}}>
+                    Utiliser ce portrait
+                  </button>
+                  <button onClick={()=>{set("showPhoto",true);setTimeout(()=>fileRef.current?.click(),50);}} style={{...gs("ghost"),fontSize:10,padding:"5px 10px"}}>
+                    Remplacer par un nouveau
+                  </button>
+                </div>
+              </div>
+            )}
             <Toggle label="Ajouter un portrait" checked={user.showPhoto} onChange={()=>set("showPhoto",!user.showPhoto)}>
               <div style={{marginBottom:12}}>
                 <label style={{display:"block",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:GRAY,marginBottom:8}}>Photo</label>
@@ -542,7 +558,7 @@ function UserFlow({ templates, onBack }) {
                   onDragOver={e=>e.preventDefault()}
                   onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith("image/"))return;set("photoUrl","");const r=new FileReader();r.onload=ev=>setCropSrc(ev.target.result);r.readAsDataURL(f);}}>
                   {(user.photoBase64||user.photoUrl)
-                    ?<img src={user.photoUrl||user.photoBase64} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:4,margin:"0 auto",display:"block"}}/>
+                    ?<img src={user.photoBase64||user.photoUrl} alt="" style={{width:60,height:60,objectFit:"cover",borderRadius:4,margin:"0 auto",display:"block"}}/>
                     :<div style={{fontSize:11,color:GRAY,lineHeight:1.8}}>📷 Glisser une photo ici<br/>ou cliquer pour choisir</div>
                   }
                 </div>
