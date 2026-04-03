@@ -233,34 +233,127 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
 
 /* ─── Cropper ────────────────────────────────────────────────────────── */
 function Cropper({ src, onConfirm, onCancel }) {
-  const cvRef = useRef(null); const imgRef = useRef(null);
-  const [crop, setCrop] = useState(null); const dragRef = useRef(null);
+  const cvRef   = useRef(null);
+  const imgRef  = useRef(null);
+  const scaleRef = useRef(1);
+  const dragRef = useRef(null);
+  const [crop, setCrop]   = useState(null);
+  const [ready, setReady] = useState(false);
+  const MAX_W = 340, MAX_H = 400;
+
   useEffect(() => {
-    const img = new Image(); img.onload = () => { imgRef.current = img; const s = Math.min(img.width,img.height,220); setCrop({x:(img.width-s)/2,y:(img.height-s)/2,s}); }; img.src = src;
+    const img = new Image();
+    img.onload = () => {
+      imgRef.current = img;
+      const sc = Math.min(MAX_W / img.naturalWidth, MAX_H / img.naturalHeight, 1);
+      scaleRef.current = sc;
+      const dw = img.naturalWidth * sc;
+      const dh = img.naturalHeight * sc;
+      const s  = Math.min(dw, dh) * 0.65;
+      setCrop({ x:(dw-s)/2, y:(dh-s)/2, s });
+      setReady(true);
+    };
+    img.src = src;
   }, [src]);
+
   useEffect(() => {
-    const img = imgRef.current; if (!img||!crop||!cvRef.current) return;
-    const cv=cvRef.current,MAX=340,sc=Math.min(MAX/img.width,MAX/img.height,1);
-    cv.width=Math.round(img.width*sc); cv.height=Math.round(img.height*sc);
-    const ctx=cv.getContext("2d"); ctx.drawImage(img,0,0,cv.width,cv.height);
-    ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(0,0,cv.width,cv.height);
-    const sx=crop.x*sc,sy=crop.y*sc,ss=crop.s*sc;
-    ctx.save(); ctx.beginPath(); ctx.rect(sx,sy,ss,ss); ctx.clip(); ctx.drawImage(img,0,0,cv.width,cv.height); ctx.restore();
-    ctx.strokeStyle=ROSE; ctx.lineWidth=2; ctx.strokeRect(sx,sy,ss,ss);
-    ctx.fillStyle=ROSE; ctx.fillRect(sx+ss-12,sy+ss-12,12,12);
+    const img = imgRef.current;
+    if (!img || !crop || !cvRef.current) return;
+    const sc = scaleRef.current;
+    const cv = cvRef.current;
+    const dw = Math.round(img.naturalWidth * sc);
+    const dh = Math.round(img.naturalHeight * sc);
+    cv.width = dw; cv.height = dh;
+    const ctx = cv.getContext("2d");
+    ctx.drawImage(img, 0, 0, dw, dh);
+    ctx.fillStyle = "rgba(0,0,0,.52)";
+    ctx.fillRect(0, 0, dw, dh);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(crop.x, crop.y, crop.s, crop.s); ctx.clip();
+    ctx.drawImage(img, 0, 0, dw, dh);
+    ctx.restore();
+    ctx.strokeStyle = ROSE; ctx.lineWidth = 2;
+    ctx.strokeRect(crop.x, crop.y, crop.s, crop.s);
+    // Poignée coin bas-droit
+    ctx.fillStyle = ROSE;
+    ctx.fillRect(crop.x + crop.s - 14, crop.y + crop.s - 14, 14, 14);
+    // Grille tiers
+    ctx.strokeStyle = "rgba(255,255,255,.3)"; ctx.lineWidth = 1;
+    [1/3, 2/3].forEach(r => {
+      ctx.beginPath(); ctx.moveTo(crop.x + crop.s*r, crop.y); ctx.lineTo(crop.x + crop.s*r, crop.y + crop.s); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(crop.x, crop.y + crop.s*r); ctx.lineTo(crop.x + crop.s, crop.y + crop.s*r); ctx.stroke();
+    });
+  }, [crop, ready]);
+
+  const getXY = (e, cv) => {
+    const r = cv.getBoundingClientRect();
+    const cl = e.touches ? e.touches[0] : e;
+    return { px: cl.clientX - r.left, py: cl.clientY - r.top };
+  };
+
+  const onDown = useCallback(e => {
+    if (!crop || !cvRef.current) return;
+    const { px, py } = getXY(e, cvRef.current);
+    const { x, y, s } = crop;
+    if (px > x+s-20 && px < x+s+4 && py > y+s-20 && py < y+s+4)
+      dragRef.current = { mode:"resize", ox:px, oy:py, cs:s, cx:x, cy:y };
+    else if (px > x && px < x+s && py > y && py < y+s)
+      dragRef.current = { mode:"move", ox:px, oy:py, cx:x, cy:y, cs:s };
+    e.preventDefault();
   }, [crop]);
-  const xy=(e,cv)=>{const r=cv.getBoundingClientRect(),img=imgRef.current,sc=cv.width/img.width,cx=e.touches?e.touches[0].clientX:e.clientX,cy2=e.touches?e.touches[0].clientY:e.clientY;return{px:(cx-r.left)/sc,py:(cy2-r.top)/sc};};
-  const onDown=useCallback(e=>{if(!imgRef.current||!crop)return;const cv=cvRef.current,{px,py}=xy(e,cv),{x,y,s}=crop;if(px>x+s-20&&px<x+s+4&&py>y+s-20&&py<y+s+4)dragRef.current={mode:"resize",ox:px,oy:py,cx:x,cy:y,cs:s};else if(px>x&&px<x+s&&py>y&&py<y+s)dragRef.current={mode:"move",ox:px,oy:py,cx:x,cy:y,cs:s};e.preventDefault();},[crop]);
-  const onMove=useCallback(e=>{const d=dragRef.current;if(!d||!imgRef.current)return;const img=imgRef.current,cv=cvRef.current,{px,py}=xy(e,cv),dx=px-d.ox,dy=py-d.oy;if(d.mode==="move")setCrop(c=>({...c,x:Math.max(0,Math.min(img.width-c.s,d.cx+dx)),y:Math.max(0,Math.min(img.height-c.s,d.cy+dy))}));else{const ns=Math.max(40,Math.min(img.width-d.cx,img.height-d.cy,d.cs+Math.min(dx,dy)));setCrop(c=>({...c,s:ns}));}e.preventDefault();},[]);
-  const onUp=useCallback(()=>{dragRef.current=null;},[]);
-  const confirm=()=>{const img=imgRef.current;if(!img||!crop)return;const out=document.createElement("canvas");out.width=SZ;out.height=SZ;out.getContext("2d").drawImage(img,crop.x,crop.y,crop.s,crop.s,0,0,SZ,SZ);onConfirm(out.toDataURL("image/jpeg",.88));};
+
+  const onMove = useCallback(e => {
+    const d = dragRef.current;
+    if (!d || !imgRef.current) return;
+    const img = imgRef.current, sc = scaleRef.current;
+    const dw = Math.round(img.naturalWidth * sc);
+    const dh = Math.round(img.naturalHeight * sc);
+    const { px, py } = getXY(e, cvRef.current);
+    if (d.mode === "move") {
+      setCrop(c => ({
+        ...c,
+        x: Math.max(0, Math.min(dw - c.s, d.cx + px - d.ox)),
+        y: Math.max(0, Math.min(dh - c.s, d.cy + py - d.oy))
+      }));
+    } else {
+      const delta = Math.max(px - d.ox, py - d.oy);
+      const ns = Math.max(40, Math.min(dw - d.cx, dh - d.cy, d.cs + delta));
+      setCrop(c => ({ ...c, s: ns }));
+    }
+    e.preventDefault();
+  }, []);
+
+  const onUp = useCallback(() => { dragRef.current = null; }, []);
+
+  const confirm = () => {
+    const img = imgRef.current;
+    if (!img || !crop) return;
+    const sc = scaleRef.current;
+    const out = document.createElement("canvas");
+    out.width = SZ; out.height = SZ;
+    // On ramène les coords display → coords image originale
+    out.getContext("2d").drawImage(img,
+      crop.x / sc, crop.y / sc, crop.s / sc, crop.s / sc,
+      0, 0, SZ, SZ
+    );
+    onConfirm(out.toDataURL("image/jpeg", .9));
+  };
+
   return (
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-      <p style={{margin:0,fontSize:11,color:GRAY,textAlign:"center"}}>Déplacez le cadre · tirez le coin rose pour redimensionner</p>
-      <canvas ref={cvRef} onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp} style={{maxWidth:"100%",cursor:"crosshair",borderRadius:4}}/>
-      <div style={{display:"flex",gap:8}}>
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:14 }}>
+      <p style={{ margin:0, fontSize:11, color:GRAY, textAlign:"center" }}>
+        Déplacez le cadre · tirez le coin rose pour redimensionner
+      </p>
+      {ready
+        ? <canvas ref={cvRef}
+            onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}
+            onTouchStart={onDown} onTouchMove={onMove} onTouchEnd={onUp}
+            style={{ maxWidth:"100%", cursor:"crosshair", borderRadius:4, touchAction:"none" }}/>
+        : <div style={{ width:200, height:150, background:LIGHT, borderRadius:4, display:"flex", alignItems:"center", justifyContent:"center", color:GRAY, fontSize:12 }}>Chargement…</div>
+      }
+      <div style={{ display:"flex", gap:8 }}>
         <button onClick={onCancel} style={gs("ghost")}>Annuler</button>
-        <button onClick={confirm} style={gs("dark")}>Valider le recadrage</button>
+        <button onClick={confirm} disabled={!ready} style={{ ...gs("dark"), opacity: ready ? 1 : .5 }}>Valider le recadrage</button>
       </div>
     </div>
   );
@@ -305,7 +398,7 @@ async function uploadToServer(base64, firstName, lastName) {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "");
   const filename = (first + last) || "portrait";
   const res = await fetch("/api/upload-portrait", {
-    method: "POST", headers: {"Content-Type":"application/json"},
+    method:"POST", headers:{"Content-Type":"application/json"},
     body: JSON.stringify({ imageData: base64, filename }),
   });
   if (!res.ok) throw new Error(`Erreur serveur (${res.status})`);
