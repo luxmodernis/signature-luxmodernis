@@ -459,7 +459,7 @@ function UserFlow({ templates, onBack }) {
       }catch{ setExistingPortrait(null); }
     },600); // délai pour éviter les requêtes à chaque frappe
     return ()=>clearTimeout(timer);
-  },[user.firstName,user.lastName]);
+  },[user.firstName,user.lastName,user.photoUrl]);
   const flash=(t,k="ok")=>{setMsg(t);setMsgType(k);setTimeout(()=>setMsg(""),5500);};
   const set=(k,v)=>setUser(u=>({...u,[k]:v}));
 
