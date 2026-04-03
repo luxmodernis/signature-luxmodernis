@@ -578,11 +578,12 @@ function UserFlow({ templates, onBack }) {
           <div style={{marginTop:24,paddingTop:20,borderTop:`1px solid ${BORDER}`}}>
             <button onClick={copy} style={{...gs("primary"),width:"100%",fontSize:14,padding:"12px 0"}}>📋 Copier ma signature</button>
           </div>
-          <div style={{marginTop:16,background:LIGHT,borderRadius:8,padding:"14px 16px",fontSize:11,color:GRAY,lineHeight:2}}>
-            <div style={{fontWeight:600,color:"#555",marginBottom:6,fontSize:12}}>Coller dans votre client mail</div>
+          <div style={{marginTop:16,background:LIGHT,borderRadius:8,padding:"14px 16px",fontSize:11,color:GRAY,lineHeight:1.9}}>
+            <div style={{fontWeight:600,color:"#555",marginBottom:8,fontSize:12}}>Coller dans votre client mail</div>
             <b>Gmail :</b> Paramètres → Signature → <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘V</kbd><br/>
             <b>Apple Mail :</b> Mail → Préférences → Signatures<br/>
-            <b>Outlook :</b> Fichier → Options → Courrier → Signatures
+            <div style={{marginTop:6}}><b>Outlook Windows :</b> Paramètres → Signatures → + Nouvelle Signature → Clic droit &gt; Coller ou <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>Ctrl+V</kbd> dans le champ texte → Enregistrer</div>
+            <div style={{marginTop:4}}><b>Outlook Mac :</b> Signature → Gérer les signatures → cliquez sur <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>+</kbd> → Nommez la signature → Clic droit + Coller ou <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘V</kbd> dans le champ → Dans "Choisir une signature par défaut" sélectionnez votre signature</div>
           </div>
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"32px 40px",background:LIGHT}}>
