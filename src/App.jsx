@@ -63,7 +63,7 @@ function buildHTML(tpl, user) {
   if (fullName.trim())
     rows.push(`<tr><td style="padding:10px 0 0;font-family:Arial,sans-serif;font-size:14pt;font-weight:bold;color:#111;">${fullName}</td></tr>`);
   if (user.role)
-    rows.push(`<tr><td style="padding:4px 0 0;font-family:Arial,sans-serif;font-size:10pt;font-weight:normal;color:#333;">${user.role}</td></tr>`);
+    rows.push(`<tr><td style="padding:4px 0 0;font-family:Arial,sans-serif;font-size:10pt;font-weight:normal;color:#333;">${titleCase(user.role)}</td></tr>`);
   if (phone)
     rows.push(`<tr><td style="padding:3px 0 0;font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;color:#111;">${phone}</td></tr>`);
   if (tpl.showAddress && tpl.address)
@@ -416,6 +416,7 @@ function UploadButton({ user, set, flash }) {
     try {
       const url = await uploadToServer(user.photoBase64, user.firstName, user.lastName);
       set("photoUrl", url);
+      set("photoBase64", null); // force l'aperçu à recharger depuis l'URL Netlify
       flash("✓ Portrait hébergé et URL ajoutée automatiquement !", "ok");
     } catch(e) {
       flash("Erreur upload : " + e.message, "err");
@@ -525,10 +526,10 @@ function UserFlow({ templates, onBack }) {
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
         <div style={{width:320,background:WHITE,borderRight:`1px solid ${BORDER}`,overflowY:"auto",padding:"24px 22px 60px",flexShrink:0}}>
           <Flash msg={msg} type={msgType}/>
-          <Field label="Prénom"><input style={INP} value={user.firstName} onChange={e=>set("firstName",e.target.value)} placeholder="Marie"/></Field>
-          <Field label="Nom"><input style={INP} value={user.lastName} onChange={e=>set("lastName",e.target.value)} placeholder="Dumont"/></Field>
-          <Field label="Poste"><input style={INP} value={user.role} onChange={e=>set("role",e.target.value)} placeholder="Responsable communication"/></Field>
-          <Field label="Téléphone" hint="Entrez les chiffres, le formatage est automatique.">
+          <Field label="Prénom"><input style={INP} value={user.firstName} onChange={e=>set("firstName",titleCase(e.target.value))} placeholder="Marie"/></Field>
+          <Field label="Nom"><input style={INP} value={user.lastName} onChange={e=>set("lastName",upperCase(e.target.value))} placeholder="DUMONT"/></Field>
+          <Field label="Poste"><input style={INP} value={user.role} onChange={e=>set("role",titleCase(e.target.value))} placeholder="Responsable Communication"/></Field>
+          <Field label="Téléphone">
             <input style={INP} value={formatPhone(user.phone)} onChange={e=>set("phone",e.target.value.replace(/\D/g,""))} placeholder="06 12 34 56 78"/>
           </Field>
           <div style={{marginTop:20}}>
