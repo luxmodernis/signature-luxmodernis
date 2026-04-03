@@ -461,7 +461,7 @@ function UserFlow({ templates, onBack }) {
       img.src=url+"?check="+Date.now();
       // Détection profil (poste + téléphone)
       try{
-        const res=await fetch(`/api/profile/${key}`);
+        const res=await fetch(`/api/profile/${first}${last}`);
         if(res.ok){
           const profile=await res.json();
           if(profile&&(profile.role||profile.phone)){
@@ -471,7 +471,7 @@ function UserFlow({ templates, onBack }) {
         }
       }catch{}
     },800);
-    setProfileKey(key);
+    setProfileKey(`${first}${last}`);
     return ()=>clearTimeout(timer);
   },[user.firstName,user.lastName,user.photoUrl]);
   const flash=(t,k="ok")=>{setMsg(t);setMsgType(k);setTimeout(()=>setMsg(""),5500);};
