@@ -328,7 +328,7 @@ function UploadButton({ user, set, flash }) {
   return (
     <button onClick={upload} disabled={loading}
       style={{...gs("dark"), width:"100%", opacity:loading ? .6 : 1, marginTop:8}}>
-      {loading ? "Upload en cours…" : "⬆ Héberger ce portrait sur wesendapps"}
+      {loading ? "Upload en cours…" : "⬆ Héberger ce portrait"}
     </button>
   );
 }
