@@ -27,6 +27,7 @@ function formatPhone(raw) {
 const blankTemplate = {
   id: null, name: "", logoUrl: DEFAULT_LOGO,
   showGif: false, gifUrl: DEFAULT_GIF, gifLinkUrl: "", gifWidth: 0,
+  imageHeight: 124,
   logoLinkUrl: "https://luxmodernis.com",
   showAddress: false, address: "",
   showWebsite: true, websiteLabel: "luxmodernis.com", websiteUrl: "https://luxmodernis.com",
@@ -36,6 +37,7 @@ const blankTemplate = {
 
 /* ─── HTML email ─────────────────────────────────────────────────────── */
 function buildHTML(tpl, user) {
+  const sz = tpl.imageHeight || SZ;
   const firstName = titleCase(user.firstName);
   const lastName  = upperCase(user.lastName);
   const fullName  = `${firstName} ${lastName}`.trim();
@@ -47,21 +49,21 @@ function buildHTML(tpl, user) {
   const igIcon    = tpl.igIconUrl || DEFAULT_IG_ICON;
 
   // Largeurs pour le calcul fluide mobile
-  const gifW   = hasGif ? (tpl.gifWidth || SZ * 2) : 0;
-  const totalW = SZ + (hasPhoto ? SZ : 0) + gifW;
-  const logoPct  = Math.round(SZ / totalW * 100);
-  const photoPct = hasPhoto ? Math.round(SZ / totalW * 100) : 0;
+  const gifW   = hasGif ? (tpl.gifWidth || sz * 2) : 0;
+  const totalW = sz + (hasPhoto ? sz : 0) + gifW;
+  const logoPct  = Math.round(sz / totalW * 100);
+  const photoPct = hasPhoto ? Math.round(sz / totalW * 100) : 0;
   const gifPct   = hasGif ? (100 - logoPct - photoPct) : 0;
 
   // Double couche : attributs HTML (Outlook desktop) + CSS width:100%;height:auto (mobile)
-  const logoImgTag = `<img src="${tpl.logoUrl}" width="${SZ}" height="${SZ}" alt="Logo" style="display:block;width:100%;height:auto;border:0;" />`;
+  const logoImgTag = `<img src="${tpl.logoUrl}" width="${sz}" height="${sz}" alt="Logo" style="display:block;width:100%;height:auto;border:0;" />`;
   const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="display:block;line-height:0;">${logoImgTag}</a>` : logoImgTag;
-  const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${SZ}" alt="" style="display:block;width:100%;height:auto;border:0;" />`;
+  const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${sz}" alt="" style="display:block;width:100%;height:auto;border:0;" />`;
   const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="display:block;line-height:0;">${gifImgTag}</a>` : gifImgTag;
 
   const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="width:100%;max-width:${totalW}px;"><tbody><tr>
-  <td width="${SZ}" style="padding:0;vertical-align:top;line-height:0;width:${logoPct}%;">${logoCell}</td>${hasPhoto ? `
-  <td width="${SZ}" style="padding:0;vertical-align:top;line-height:0;width:${photoPct}%;"><img src="${photoSrc}" width="${SZ}" height="${SZ}" alt="${fullName}" style="display:block;width:100%;height:auto;border:0;" /></td>` : ""}${hasGif ? `
+  <td width="${sz}" style="padding:0;vertical-align:top;line-height:0;width:${logoPct}%;">${logoCell}</td>${hasPhoto ? `
+  <td width="${sz}" style="padding:0;vertical-align:top;line-height:0;width:${photoPct}%;"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="display:block;width:100%;height:auto;border:0;" /></td>` : ""}${hasGif ? `
   <td width="${gifW}" style="padding:0;vertical-align:top;line-height:0;width:${gifPct}%;">${gifCell}</td>` : ""}
 </tr></tbody></table>`;
 
@@ -144,6 +146,7 @@ function Nav({ onBack, title, step }) {
 
 /* ─── Aperçu signature ───────────────────────────────────────────────── */
 function SigPreview({ tpl, user, showPlaceholder=false }) {
+  const sz = tpl.imageHeight || SZ;
   const photoSrc  = user.showPhoto ? (user.photoBase64 || user.photoUrl || "") : "";
   const hasPhoto  = !!photoSrc;
   const hasGif    = tpl.showGif && tpl.gifUrl;
@@ -160,15 +163,15 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
       {/* Ligne 1 — images jointives */}
       <div style={{ display:"flex", gap:0, lineHeight:0, marginBottom:0, overflow:"hidden" }}>
         {tpl.logoLinkUrl
-          ? <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0}}><img src={tpl.logoUrl} alt="Logo" height={SZ} style={{display:"block",height:SZ,width:"auto"}} /></a>
-          : <img src={tpl.logoUrl} alt="Logo" height={SZ} style={{display:"block",height:SZ,width:"auto",flexShrink:0}} />
+          ? <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0}}><img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
+          : <img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}} />
         }
         {user.showPhoto && (
           photoSrc
-            ? <img src={photoSrc} alt={fullName} height={SZ} style={{display:"block",height:SZ,width:"auto",flexShrink:0}}/>
+            ? <img src={photoSrc} alt={fullName} height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}}/>
             : showPlaceholder
-              ? <div style={{width:SZ,height:SZ,flexShrink:0,background:"#ede9e4",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <svg width={SZ*0.45} height={SZ*0.45} viewBox="0 0 24 24" fill="none">
+              ? <div style={{width:sz,height:sz,flexShrink:0,background:"#ede9e4",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <svg width={sz*0.45} height={sz*0.45} viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="8" r="4" fill="#b8b0a8"/>
                     <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#b8b0a8" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
@@ -177,8 +180,8 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
         )}
         {hasGif && (
           tpl.gifLinkUrl
-            ? <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0}}><img src={tpl.gifUrl} alt="" height={SZ} style={{display:"block",height:SZ,width:"auto"}} /></a>
-            : <img src={tpl.gifUrl} alt="" height={SZ} style={{display:"block",height:SZ,width:"auto",flexShrink:0}} />
+            ? <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0}}><img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
+            : <img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}} />
         )}
       </div>
       {/* Prénom NOM — Arial 14 bold */}
@@ -448,7 +451,7 @@ function UserFlow({ templates, onBack }) {
   useEffect(()=>{
     if(!tpl||!tpl.showGif||!tpl.gifUrl){setMeasuredGifW(0);return;}
     const img=new Image();
-    img.onload=()=>setMeasuredGifW(Math.round(img.naturalWidth*(SZ/img.naturalHeight)));
+    img.onload=()=>setMeasuredGifW(Math.round(img.naturalWidth*((tpl.imageHeight||SZ)/img.naturalHeight)));
     img.src=tpl.gifUrl;
   },[tpl]);
 
@@ -702,6 +705,19 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
               <input style={INP} value={editing.gifLinkUrl||""} onChange={e=>set("gifLinkUrl",e.target.value)} placeholder="https://…"/>
             </Field>
           </Toggle>
+          <Field label="Taille du bloc images">
+            <div style={{display:"flex",gap:6}}>
+              {[{label:"Compact",value:90},{label:"Normal",value:124},{label:"Grand",value:160}].map(opt=>{
+                const active=(editing.imageHeight||124)===opt.value;
+                return(
+                  <button key={opt.value} onClick={()=>set("imageHeight",opt.value)}
+                    style={{flex:1,border:`1px solid ${active?ROSE:BORDER}`,borderRadius:6,padding:"7px 4px",fontSize:11,cursor:"pointer",background:active?ROSE:WHITE,color:active?DARK:GRAY,fontWeight:active?600:400,fontFamily:"inherit",transition:"all .15s"}}>
+                    {opt.label}<br/><span style={{fontSize:10,fontWeight:400}}>{opt.value}px</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
           <div style={{height:1,background:BORDER,margin:"16px 0"}}/>
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:ROSE,marginBottom:12}}>Coordonnées</div>
           <Toggle label="Adresse postale" checked={editing.showAddress} onChange={()=>set("showAddress",!editing.showAddress)}>
@@ -775,7 +791,7 @@ export default function App() {
     toMeasure.forEach(t=>{
       const img=new Image();
       img.onload=()=>{
-        const w=Math.round(img.naturalWidth*(SZ/img.naturalHeight));
+        const w=Math.round(img.naturalWidth*((t.imageHeight||SZ)/img.naturalHeight));
         saveTpl({...t,gifWidth:w});
       };
       img.src=t.gifUrl;
