@@ -443,6 +443,7 @@ function UserFlow({ templates, onBack }) {
   const [user,setUser]=useState({...blankUser}); const [cropSrc,setCropSrc]=useState(null);
   const [msg,setMsg]=useState(""); const [msgType,setMsgType]=useState("ok");
   const [measuredGifW,setMeasuredGifW]=useState(0);
+  const [imageHeight,setImageHeight]=useState(124);
   const [existingPortrait,setExistingPortrait]=useState(null); // URL si portrait déjà hébergé
   const [profileKey,setProfileKey]=useState(""); // clé du profil (ex: bsandrez)
   const fileRef=useRef(null);
@@ -489,7 +490,7 @@ function UserFlow({ templates, onBack }) {
   const copy=async()=>{
     const hasLocal=user.showPhoto&&user.photoBase64&&!user.photoUrl;
     if(hasLocal){flash("⚠ Photo locale — uploadez-la et entrez l'URL pour qu'elle s'affiche chez vos destinataires.","warn");return;}
-    const activeTpl = measuredGifW>0 ? {...tpl,gifWidth:measuredGifW} : tpl;
+    const activeTpl = {...tpl, imageHeight, ...(measuredGifW>0?{gifWidth:measuredGifW}:{})};
     const html=buildHTML(activeTpl,user);
     try{
       await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"})})]);
@@ -516,7 +517,7 @@ function UserFlow({ templates, onBack }) {
           ?<div style={{textAlign:"center",padding:"80px 0",color:GRAY,fontSize:14}}>Aucun template disponible.<br/>Demandez à un admin d'en créer un.</div>
           :<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(440px,1fr))",gap:20,maxWidth:1100,margin:"0 auto"}}>
             {templates.map(t=>(
-              <div key={t.id} onClick={()=>{setTpl(t);setStep("fill");}}
+              <div key={t.id} onClick={()=>{setTpl(t);setImageHeight(t.imageHeight||124);setStep("fill");}}
                 style={{background:WHITE,border:`1px solid ${BORDER}`,borderRadius:10,padding:"20px 22px",cursor:"pointer",transition:"border-color .15s"}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor=ROSE}
                 onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>
@@ -602,6 +603,18 @@ function UserFlow({ templates, onBack }) {
             </Toggle>
           </div>
           <div style={{marginTop:24,paddingTop:20,borderTop:`1px solid ${BORDER}`}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".08em",color:GRAY,marginBottom:8}}>Taille du bloc images</div>
+            <div style={{display:"flex",gap:6,marginBottom:16}}>
+              {[{label:"Compact",value:90},{label:"Normal",value:124},{label:"Grand",value:160}].map(opt=>{
+                const active=imageHeight===opt.value;
+                return(
+                  <button key={opt.value} onClick={()=>setImageHeight(opt.value)}
+                    style={{flex:1,border:`1px solid ${active?ROSE:BORDER}`,borderRadius:6,padding:"7px 4px",fontSize:11,cursor:"pointer",background:active?ROSE:WHITE,color:active?DARK:GRAY,fontWeight:active?600:400,fontFamily:"inherit",transition:"all .15s"}}>
+                    {opt.label}<br/><span style={{fontSize:10,fontWeight:400}}>{opt.value}px</span>
+                  </button>
+                );
+              })}
+            </div>
             <button onClick={copy} style={{...gs("primary"),width:"100%",fontSize:14,padding:"12px 0"}}>📋 Copier ma signature</button>
           </div>
           <div style={{marginTop:16,background:LIGHT,borderRadius:8,padding:"14px 16px",fontSize:11,color:GRAY,lineHeight:1.9}}>
@@ -613,7 +626,7 @@ function UserFlow({ templates, onBack }) {
         <div style={{flex:1,overflowY:"auto",padding:"32px 40px",background:LIGHT}}>
           <p style={{margin:"0 0 20px",fontSize:11,color:"#bbb",fontStyle:"italic"}}>Aperçu en temps réel</p>
           <div style={{background:WHITE,border:`1px solid ${BORDER}`,borderRadius:10,padding:"28px 32px",display:"inline-block"}}>
-            <SigPreview tpl={tpl} user={user}/>
+            <SigPreview tpl={{...tpl, imageHeight}} user={user}/>
           </div>
         </div>
       </div>
