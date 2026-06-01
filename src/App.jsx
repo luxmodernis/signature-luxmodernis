@@ -5,6 +5,7 @@ const DEFAULT_GIF     = "https://wesendapps.com/LuxModernis/signature/IMG/GIF-Ne
 const DEFAULT_LI_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-linkedin.svg";
 const DEFAULT_IG_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-instagram.svg";
 const SZ = 124;
+const VERSION = "v2.6 – 2026-06-01";
 
 const ROSE = "#EFA9A9"; const DARK = "#1C1C1C"; const GRAY = "#777";
 const LIGHT = "#F8F6F3"; const BORDER = "#E8E4DF"; const WHITE = "#FFFFFF";
@@ -48,24 +49,21 @@ function buildHTML(tpl, user) {
   const liIcon    = tpl.liIconUrl || DEFAULT_LI_ICON;
   const igIcon    = tpl.igIconUrl || DEFAULT_IG_ICON;
 
-  // Largeurs pour le calcul fluide mobile
-  const gifW   = hasGif ? (tpl.gifWidth || sz * 2) : 0;
+  // GIF : calcul depuis le ratio natif (évite toute dépendance async)
+  const gifW   = hasGif ? (tpl.gifAspectRatio ? Math.round(tpl.gifAspectRatio * sz) : (tpl.gifWidth || sz * 2)) : 0;
   const totalW = sz + (hasPhoto ? sz : 0) + gifW;
-  const logoPct  = Math.round(sz / totalW * 100);
-  const photoPct = hasPhoto ? Math.round(sz / totalW * 100) : 0;
-  const gifPct   = hasGif ? (100 - logoPct - photoPct) : 0;
 
-  // Double couche : attributs HTML (Outlook desktop) + CSS width:100%;height:auto (mobile)
-  const logoImgTag = `<img src="${tpl.logoUrl}" width="${sz}" height="${sz}" alt="Logo" style="display:block;width:100%;height:auto;border:0;" />`;
-  const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="display:block;line-height:0;">${logoImgTag}</a>` : logoImgTag;
-  const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${sz}" alt="" style="display:block;width:100%;height:auto;border:0;" />`;
-  const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="display:block;line-height:0;">${gifImgTag}</a>` : gifImgTag;
+  // table-layout:fixed + largeurs px → Outlook/WebKit respecte strictement les colonnes
+  const td  = (w) => `padding:0;vertical-align:top;line-height:0;font-size:0;width:${w}px;height:${sz}px;overflow:hidden;`;
+  const a   = `display:block;line-height:0;font-size:0;`;
+  const img = (w, h) => `display:block;width:${w}px;height:${h}px;border:0;`;
 
-  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="width:100%;max-width:${totalW}px;"><tbody><tr>
-  <td width="${sz}" style="padding:0;vertical-align:top;line-height:0;width:${logoPct}%;">${logoCell}</td>${hasPhoto ? `
-  <td width="${sz}" style="padding:0;vertical-align:top;line-height:0;width:${photoPct}%;"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="display:block;width:100%;height:auto;border:0;" /></td>` : ""}${hasGif ? `
-  <td width="${gifW}" style="padding:0;vertical-align:top;line-height:0;width:${gifPct}%;">${gifCell}</td>` : ""}
-</tr></tbody></table>`;
+  const logoImgTag = `<img src="${tpl.logoUrl}" width="${sz}" height="${sz}" alt="Logo" style="${img(sz,sz)}" />`;
+  const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="${a}">${logoImgTag}</a>` : logoImgTag;
+  const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${sz}" alt="" style="${img(gifW,sz)}" />`;
+  const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="${a}">${gifImgTag}</a>` : gifImgTag;
+
+  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="table-layout:fixed;border-collapse:collapse;width:${totalW}px;"><tbody><tr><td width="${sz}" style="${td(sz)}">${logoCell}</td>${hasPhoto?`<td width="${sz}" style="${td(sz)}"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="${img(sz,sz)}" /></td>`:``}${hasGif?`<td width="${gifW}" style="${td(gifW)}">${gifCell}</td>`:``}</tr></tbody></table>`;
 
   const rows = [];
   if (fullName.trim())
@@ -160,28 +158,36 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
 
   return (
     <div style={{ fontFamily:"Arial, sans-serif" }}>
-      {/* Ligne 1 — images jointives */}
-      <div style={{ display:"flex", gap:0, lineHeight:0, marginBottom:0, overflow:"hidden" }}>
-        {tpl.logoLinkUrl
-          ? <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0}}><img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
-          : <img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}} />
-        }
+      {/* Ligne 1 — images jointives (inline-block + verticalAlign:top, sans flex) */}
+      <div style={{ fontSize:0, lineHeight:0, marginBottom:0, overflow:"hidden", whiteSpace:"nowrap" }}>
+        {/* Logo */}
+        <div style={{display:"inline-block",verticalAlign:"top",position:"relative",lineHeight:0,height:sz,overflow:"hidden"}}>
+          <img src={tpl.logoUrl} alt="Logo" style={{display:"block",height:sz,width:"auto"}} />
+          {tpl.logoLinkUrl && <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{position:"absolute",inset:0}} aria-label="Logo" />}
+        </div>
+        {/* Photo — même structure div que logo/gif */}
         {user.showPhoto && (
           photoSrc
-            ? <img src={photoSrc} alt={fullName} height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}}/>
+            ? <div style={{display:"inline-block",verticalAlign:"top",lineHeight:0,height:sz,overflow:"hidden"}}>
+                <img src={photoSrc} alt={fullName} style={{display:"block",height:sz,width:"auto"}}/>
+              </div>
             : showPlaceholder
-              ? <div style={{width:sz,height:sz,flexShrink:0,background:"#ede9e4",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <svg width={sz*0.45} height={sz*0.45} viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" fill="#b8b0a8"/>
-                    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#b8b0a8" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
+              ? <div style={{display:"inline-block",verticalAlign:"top",width:sz,height:sz,background:"#ede9e4",position:"relative"}}>
+                  <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <svg width={sz*0.45} height={sz*0.45} viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="8" r="4" fill="#b8b0a8"/>
+                      <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#b8b0a8" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
                 </div>
               : null
         )}
+        {/* GIF */}
         {hasGif && (
-          tpl.gifLinkUrl
-            ? <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0}}><img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
-            : <img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}} />
+          <div style={{display:"inline-block",verticalAlign:"top",position:"relative",lineHeight:0,height:sz,overflow:"hidden"}}>
+            <img src={tpl.gifUrl} alt="" style={{display:"block",height:sz,width:"auto"}} />
+            {tpl.gifLinkUrl && <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{position:"absolute",inset:0}} />}
+          </div>
         )}
       </div>
       {/* Prénom NOM — Arial 14 bold */}
@@ -375,7 +381,8 @@ function HomeScreen({ onChoice }) {
     <div style={{ minHeight:"100vh", background:LIGHT, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
       <img src={DEFAULT_LOGO} alt="LuxModernis" style={{ width:64, height:64, objectFit:"cover", borderRadius:6, marginBottom:28 }} onError={e=>e.target.style.display="none"} />
       <h1 style={{ fontFamily:"Georgia,'Times New Roman',serif", fontSize:30, fontWeight:600, color:DARK, margin:"0 0 8px", textAlign:"center" }}>Signatures LuxModernis</h1>
-      <p style={{ fontSize:14, color:GRAY, margin:"0 0 48px", textAlign:"center" }}>Que souhaitez-vous faire ?</p>
+      <p style={{ fontSize:14, color:GRAY, margin:"0 0 4px", textAlign:"center" }}>Que souhaitez-vous faire ?</p>
+      <p style={{ fontSize:10, color:"#bbb", margin:"0 0 48px", textAlign:"center", fontFamily:"monospace" }}>{VERSION}</p>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, width:"100%", maxWidth:600 }}>
         {[
           { key:"user",  emoji:"✍️", title:"Créer ma signature",  desc:"Choisissez un template et personnalisez vos informations." },
@@ -448,13 +455,14 @@ function UserFlow({ templates, onBack }) {
   const [profileKey,setProfileKey]=useState(""); // clé du profil (ex: bsandrez)
   const fileRef=useRef(null);
 
-  // Mesure le GIF dès qu'un template est sélectionné
+  // Calcul gifWidth pour l'aperçu et la copie — synchrone si gifAspectRatio disponible
   useEffect(()=>{
     if(!tpl||!tpl.showGif||!tpl.gifUrl){setMeasuredGifW(0);return;}
+    if(tpl.gifAspectRatio){setMeasuredGifW(Math.round(tpl.gifAspectRatio*imageHeight));return;}
     const img=new Image();
-    img.onload=()=>setMeasuredGifW(Math.round(img.naturalWidth*((tpl.imageHeight||SZ)/img.naturalHeight)));
+    img.onload=()=>setMeasuredGifW(Math.round(img.naturalWidth*(imageHeight/img.naturalHeight)));
     img.src=tpl.gifUrl;
-  },[tpl]);
+  },[tpl, imageHeight]);
 
   // Détecte un portrait existant quand prénom + nom sont remplis
   useEffect(()=>{
@@ -507,6 +515,30 @@ function UserFlow({ templates, onBack }) {
         if(profileKey) fetch("/api/save-profile",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:profileKey,role:user.role,phone:user.phone})}).catch(()=>{});
       }catch{flash("Impossible de copier automatiquement.","err");}
     }
+  };
+
+  const testInBrowser=()=>{
+    const activeTpl={...tpl,imageHeight,...(measuredGifW>0?{gifWidth:measuredGifW}:{})};
+    const body=buildHTML(activeTpl,user);
+    const sz=imageHeight||124;
+    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Test signature</title></head><body style="margin:32px;background:#f5f5f5;font-family:Arial,sans-serif;"><p style="font-size:11px;color:#999;margin-bottom:16px;">Taille sélectionnée : <b>${sz}px</b> — GIF width calculé : <b>${measuredGifW}px</b></p><div style="background:#fff;padding:28px;display:inline-block;border:1px solid #ddd;">${body}</div></body></html>`;
+    const w=window.open("","_blank");
+    if(w){w.document.write(html);w.document.close();}
+  };
+
+  const download=()=>{
+    const hasLocal=user.showPhoto&&user.photoBase64&&!user.photoUrl;
+    if(hasLocal){flash("⚠ Photo locale — uploadez-la d'abord pour qu'elle s'affiche dans les emails.","warn");return;}
+    const activeTpl={...tpl,imageHeight,...(measuredGifW>0?{gifWidth:measuredGifW}:{})};
+    const body=buildHTML(activeTpl,user);
+    const html=`<!DOCTYPE html>\n<html>\n<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"/></head>\n<body style="margin:0;padding:0;">${body}</body>\n</html>`;
+    const blob=new Blob([html],{type:"text/html"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    const first=(user.firstName||"").toLowerCase().replace(/\s/g,"");
+    const last=(user.lastName||"").toLowerCase().replace(/\s/g,"");
+    a.download=`signature-${first}${last}.htm`;
+    a.click();URL.revokeObjectURL(a.href);
   };
 
   if(step==="pick") return(
@@ -616,11 +648,19 @@ function UserFlow({ templates, onBack }) {
               })}
             </div>
             <button onClick={copy} style={{...gs("primary"),width:"100%",fontSize:14,padding:"12px 0"}}>📋 Copier ma signature</button>
+            <button onClick={testInBrowser} style={{...gs("ghost"),width:"100%",fontSize:12,padding:"8px 0",marginTop:8}}>🔍 Tester dans le navigateur</button>
           </div>
           <div style={{marginTop:16,background:LIGHT,borderRadius:8,padding:"14px 16px",fontSize:11,color:GRAY,lineHeight:1.9}}>
-            <div style={{fontWeight:600,color:"#555",marginBottom:8,fontSize:12}}>Coller dans votre client mail</div>
-            <div style={{marginTop:0}}><b>Outlook Windows :</b> Paramètres → Signatures → + Nouvelle Signature → Clic droit &gt; Coller ou <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>Ctrl+V</kbd> dans le champ texte → Enregistrer</div>
-            <div style={{marginTop:4}}><b>Outlook Mac :</b> Signature → Gérer les signatures → cliquez sur <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>+</kbd> → Nommez la signature → Clic droit + Coller ou <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘V</kbd> dans le champ → Dans "Choisir une signature par défaut" sélectionnez votre signature</div>
+            <div style={{fontWeight:600,color:"#555",marginBottom:8,fontSize:12}}>Installer dans Outlook Mac (méthode recommandée)</div>
+            <div style={{marginTop:0,lineHeight:1.7}}>
+              1. Cliquez <b>Télécharger le fichier .htm</b> ci-dessus<br/>
+              2. Dans le Finder, appuyez <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘⇧G</kbd> et collez :<br/>
+              <code style={{fontSize:10,background:"#f0f0f0",padding:"3px 6px",borderRadius:3,display:"inline-block",marginTop:3,marginBottom:3,wordBreak:"break-all"}}>~/Library/Group Containers/UBF8T346G9.Office/Outlook/Outlook 15 Profiles/Main Profile/Data/Signatures</code><br/>
+              3. Placez le fichier .htm dans ce dossier<br/>
+              4. Dans Outlook → Préférences → Signatures → sélectionnez la signature
+            </div>
+            <div style={{marginTop:10,borderTop:`1px solid ${BORDER}`,paddingTop:10,fontWeight:600,color:"#555",marginBottom:4,fontSize:12}}>Outlook Windows / coller</div>
+            <div><b>Outlook Windows :</b> Paramètres → Signatures → + Nouvelle Signature → <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>Ctrl+V</kbd></div>
           </div>
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"32px 40px",background:LIGHT}}>
@@ -796,16 +836,17 @@ export default function App() {
   const saveTpl=tpl=>{const e=templates.find(t=>t.id===tpl.id);persist(e?templates.map(t=>t.id===tpl.id?tpl:t):[...templates,tpl]);};
   const deleteTpl=id=>persist(templates.filter(t=>t.id!==id));
 
-  // Mesure automatique du gifWidth pour tous les templates qui en ont besoin
+  // Stocke gifAspectRatio (ratio natif) pour tous les templates GIF qui ne l'ont pas encore
   useEffect(()=>{
     if(templates.length===0) return;
-    const toMeasure=templates.filter(t=>t.showGif&&t.gifUrl&&(!t.gifWidth||t.gifWidth===0));
+    const toMeasure=templates.filter(t=>t.showGif&&t.gifUrl&&!t.gifAspectRatio);
     if(toMeasure.length===0) return;
     toMeasure.forEach(t=>{
       const img=new Image();
       img.onload=()=>{
+        const ratio=img.naturalWidth/img.naturalHeight;
         const w=Math.round(img.naturalWidth*((t.imageHeight||SZ)/img.naturalHeight));
-        saveTpl({...t,gifWidth:w});
+        saveTpl({...t,gifWidth:w,gifAspectRatio:ratio});
       };
       img.src=t.gifUrl;
     });
