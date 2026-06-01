@@ -161,9 +161,9 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
   return (
     <div style={{ fontFamily:"Arial, sans-serif" }}>
       {/* Ligne 1 — images jointives */}
-      <div style={{ display:"flex", gap:0, lineHeight:0, marginBottom:0, overflow:"hidden", alignItems:"flex-start" }}>
+      <div style={{ display:"flex", gap:0, lineHeight:0, fontSize:0, marginBottom:0, overflow:"hidden", alignItems:"flex-start" }}>
         {tpl.logoLinkUrl
-          ? <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0,verticalAlign:"top"}}><img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
+          ? <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0,verticalAlign:"top",height:sz,overflow:"hidden"}}><img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
           : <img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}} />
         }
         {user.showPhoto && (
@@ -180,7 +180,7 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
         )}
         {hasGif && (
           tpl.gifLinkUrl
-            ? <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0,verticalAlign:"top"}}><img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
+            ? <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0,verticalAlign:"top",height:sz,overflow:"hidden"}}><img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
             : <img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}} />
         )}
       </div>
