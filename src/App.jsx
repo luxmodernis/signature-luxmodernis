@@ -641,16 +641,9 @@ function UserFlow({ templates, onBack }) {
             <button onClick={copy} style={{...gs("primary"),width:"100%",fontSize:14,padding:"12px 0"}}>📋 Copier ma signature</button>
           </div>
           <div style={{marginTop:16,background:LIGHT,borderRadius:8,padding:"14px 16px",fontSize:11,color:GRAY,lineHeight:1.9}}>
-            <div style={{fontWeight:600,color:"#555",marginBottom:8,fontSize:12}}>Installer dans Outlook Mac (méthode recommandée)</div>
-            <div style={{marginTop:0,lineHeight:1.7}}>
-              1. Cliquez <b>Télécharger le fichier .htm</b> ci-dessus<br/>
-              2. Dans le Finder, appuyez <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘⇧G</kbd> et collez :<br/>
-              <code style={{fontSize:10,background:"#f0f0f0",padding:"3px 6px",borderRadius:3,display:"inline-block",marginTop:3,marginBottom:3,wordBreak:"break-all"}}>~/Library/Group Containers/UBF8T346G9.Office/Outlook/Outlook 15 Profiles/Main Profile/Data/Signatures</code><br/>
-              3. Placez le fichier .htm dans ce dossier<br/>
-              4. Dans Outlook → Préférences → Signatures → sélectionnez la signature
-            </div>
-            <div style={{marginTop:10,borderTop:`1px solid ${BORDER}`,paddingTop:10,fontWeight:600,color:"#555",marginBottom:4,fontSize:12}}>Outlook Windows / coller</div>
-            <div><b>Outlook Windows :</b> Paramètres → Signatures → + Nouvelle Signature → <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>Ctrl+V</kbd></div>
+            <div style={{fontWeight:600,color:"#555",marginBottom:6,fontSize:12}}>Coller dans Outlook</div>
+            <div style={{marginBottom:6}}><b>Mac :</b> <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘,</kbd> → Signatures → <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>+</kbd> → nommez-la → <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>⌘V</kbd> dans le champ → Enregistrer</div>
+            <div><b>Windows :</b> Fichier → Options → Courrier → Signatures → Nouvelle → <kbd style={{background:"#f0f0f0",border:`1px solid ${BORDER}`,borderRadius:3,padding:"1px 5px"}}>Ctrl+V</kbd> → OK</div>
           </div>
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"32px 40px",background:LIGHT}}>
