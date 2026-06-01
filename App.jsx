@@ -158,29 +158,32 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
 
   return (
     <div style={{ fontFamily:"Arial, sans-serif" }}>
-      {/* Ligne 1 — images jointives */}
-      <div style={{ display:"flex", gap:0, lineHeight:0, fontSize:0, marginBottom:0, overflow:"hidden", alignItems:"flex-start" }}>
-        {/* Logo — le <a> est en position:absolute pour ne pas perturber le flux flex */}
-        <div style={{position:"relative",flexShrink:0,lineHeight:0,height:sz,overflow:"hidden"}}>
-          <img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto"}} />
+      {/* Ligne 1 — images jointives (inline-block + verticalAlign:top, sans flex) */}
+      <div style={{ fontSize:0, lineHeight:0, marginBottom:0, overflow:"hidden", whiteSpace:"nowrap" }}>
+        {/* Logo */}
+        <div style={{display:"inline-block",verticalAlign:"top",position:"relative",lineHeight:0,height:sz,overflow:"hidden"}}>
+          <img src={tpl.logoUrl} alt="Logo" style={{display:"block",height:sz,width:"auto"}} />
           {tpl.logoLinkUrl && <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{position:"absolute",inset:0}} aria-label="Logo" />}
         </div>
+        {/* Photo */}
         {user.showPhoto && (
           photoSrc
-            ? <img src={photoSrc} alt={fullName} height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}}/>
+            ? <img src={photoSrc} alt={fullName} style={{display:"inline-block",verticalAlign:"top",height:sz,width:"auto"}}/>
             : showPlaceholder
-              ? <div style={{width:sz,height:sz,flexShrink:0,background:"#ede9e4",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <svg width={sz*0.45} height={sz*0.45} viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" fill="#b8b0a8"/>
-                    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#b8b0a8" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
+              ? <div style={{display:"inline-block",verticalAlign:"top",width:sz,height:sz,background:"#ede9e4",position:"relative"}}>
+                  <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <svg width={sz*0.45} height={sz*0.45} viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="8" r="4" fill="#b8b0a8"/>
+                      <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#b8b0a8" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
                 </div>
               : null
         )}
-        {/* GIF — même pattern */}
+        {/* GIF */}
         {hasGif && (
-          <div style={{position:"relative",flexShrink:0,lineHeight:0,height:sz,overflow:"hidden"}}>
-            <img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto"}} />
+          <div style={{display:"inline-block",verticalAlign:"top",position:"relative",lineHeight:0,height:sz,overflow:"hidden"}}>
+            <img src={tpl.gifUrl} alt="" style={{display:"block",height:sz,width:"auto"}} />
             {tpl.gifLinkUrl && <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{position:"absolute",inset:0}} />}
           </div>
         )}
