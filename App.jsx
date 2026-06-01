@@ -56,16 +56,14 @@ function buildHTML(tpl, user) {
   const gifPct   = hasGif ? (100 - logoPct - photoPct) : 0;
 
   // Double couche : attributs HTML (Outlook desktop) + CSS width:100%;height:auto (mobile)
+  const aStyle     = `display:block;line-height:0;font-size:0;mso-line-height-rule:exactly;`;
+  const tdStyle    = (w, pct) => `padding:0;vertical-align:top;line-height:0;font-size:0;mso-line-height-rule:exactly;width:${pct}%;`;
   const logoImgTag = `<img src="${tpl.logoUrl}" width="${sz}" height="${sz}" alt="Logo" style="display:block;width:100%;height:auto;border:0;" />`;
-  const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="display:block;line-height:0;">${logoImgTag}</a>` : logoImgTag;
+  const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="${aStyle}">${logoImgTag}</a>` : logoImgTag;
   const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${sz}" alt="" style="display:block;width:100%;height:auto;border:0;" />`;
-  const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="display:block;line-height:0;">${gifImgTag}</a>` : gifImgTag;
+  const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="${aStyle}">${gifImgTag}</a>` : gifImgTag;
 
-  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="width:100%;max-width:${totalW}px;"><tbody><tr>
-  <td width="${sz}" style="padding:0;vertical-align:top;line-height:0;width:${logoPct}%;">${logoCell}</td>${hasPhoto ? `
-  <td width="${sz}" style="padding:0;vertical-align:top;line-height:0;width:${photoPct}%;"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="display:block;width:100%;height:auto;border:0;" /></td>` : ""}${hasGif ? `
-  <td width="${gifW}" style="padding:0;vertical-align:top;line-height:0;width:${gifPct}%;">${gifCell}</td>` : ""}
-</tr></tbody></table>`;
+  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="width:100%;max-width:${totalW}px;"><tbody><tr><td width="${sz}" style="${tdStyle(sz, logoPct)}">${logoCell}</td>${hasPhoto ? `<td width="${sz}" style="${tdStyle(sz, photoPct)}"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="display:block;width:100%;height:auto;border:0;" /></td>` : ""}${hasGif ? `<td width="${gifW}" style="${tdStyle(gifW, gifPct)}">${gifCell}</td>` : ""}</tr></tbody></table>`;
 
   const rows = [];
   if (fullName.trim())
