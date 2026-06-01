@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const DEFAULT_LOGO    = "https://wesendapps.com/LuxModernis/signature/IMG/luxmodernis-logo.jpg";
+const DEFAULT_LOGO    = "/IMG/luxmodernis-logo-400x400.png";
 const DEFAULT_GIF     = "https://wesendapps.com/LuxModernis/signature/IMG/GIF-New_Website.gif";
 const DEFAULT_LI_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-linkedin.svg";
 const DEFAULT_IG_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-instagram.svg";
@@ -517,15 +517,6 @@ function UserFlow({ templates, onBack }) {
     }
   };
 
-  const testInBrowser=()=>{
-    const activeTpl={...tpl,imageHeight,...(measuredGifW>0?{gifWidth:measuredGifW}:{})};
-    const body=buildHTML(activeTpl,user);
-    const sz=imageHeight||124;
-    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Test signature</title></head><body style="margin:32px;background:#f5f5f5;font-family:Arial,sans-serif;"><p style="font-size:11px;color:#999;margin-bottom:16px;">Taille sélectionnée : <b>${sz}px</b> — GIF width calculé : <b>${measuredGifW}px</b></p><div style="background:#fff;padding:28px;display:inline-block;border:1px solid #ddd;">${body}</div></body></html>`;
-    const w=window.open("","_blank");
-    if(w){w.document.write(html);w.document.close();}
-  };
-
   const download=()=>{
     const hasLocal=user.showPhoto&&user.photoBase64&&!user.photoUrl;
     if(hasLocal){flash("⚠ Photo locale — uploadez-la d'abord pour qu'elle s'affiche dans les emails.","warn");return;}
@@ -648,7 +639,6 @@ function UserFlow({ templates, onBack }) {
               })}
             </div>
             <button onClick={copy} style={{...gs("primary"),width:"100%",fontSize:14,padding:"12px 0"}}>📋 Copier ma signature</button>
-            <button onClick={testInBrowser} style={{...gs("ghost"),width:"100%",fontSize:12,padding:"8px 0",marginTop:8}}>🔍 Tester dans le navigateur</button>
           </div>
           <div style={{marginTop:16,background:LIGHT,borderRadius:8,padding:"14px 16px",fontSize:11,color:GRAY,lineHeight:1.9}}>
             <div style={{fontWeight:600,color:"#555",marginBottom:8,fontSize:12}}>Installer dans Outlook Mac (méthode recommandée)</div>
