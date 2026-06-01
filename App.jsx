@@ -165,10 +165,12 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
           <img src={tpl.logoUrl} alt="Logo" style={{display:"block",height:sz,width:"auto"}} />
           {tpl.logoLinkUrl && <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{position:"absolute",inset:0}} aria-label="Logo" />}
         </div>
-        {/* Photo */}
+        {/* Photo — même structure div que logo/gif */}
         {user.showPhoto && (
           photoSrc
-            ? <img src={photoSrc} alt={fullName} style={{display:"inline-block",verticalAlign:"top",height:sz,width:"auto"}}/>
+            ? <div style={{display:"inline-block",verticalAlign:"top",lineHeight:0,height:sz,overflow:"hidden"}}>
+                <img src={photoSrc} alt={fullName} style={{display:"block",height:sz,width:"auto"}}/>
+              </div>
             : showPlaceholder
               ? <div style={{display:"inline-block",verticalAlign:"top",width:sz,height:sz,background:"#ede9e4",position:"relative"}}>
                   <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -452,13 +454,13 @@ function UserFlow({ templates, onBack }) {
   const [profileKey,setProfileKey]=useState(""); // clé du profil (ex: bsandrez)
   const fileRef=useRef(null);
 
-  // Mesure le GIF dès qu'un template est sélectionné
+  // Mesure le GIF dès qu'un template est sélectionné OU que imageHeight change
   useEffect(()=>{
     if(!tpl||!tpl.showGif||!tpl.gifUrl){setMeasuredGifW(0);return;}
     const img=new Image();
-    img.onload=()=>setMeasuredGifW(Math.round(img.naturalWidth*((tpl.imageHeight||SZ)/img.naturalHeight)));
+    img.onload=()=>setMeasuredGifW(Math.round(img.naturalWidth*(imageHeight/img.naturalHeight)));
     img.src=tpl.gifUrl;
-  },[tpl]);
+  },[tpl, imageHeight]);
 
   // Détecte un portrait existant quand prénom + nom sont remplis
   useEffect(()=>{
