@@ -5,6 +5,7 @@ const DEFAULT_GIF     = "https://wesendapps.com/LuxModernis/signature/IMG/GIF-Ne
 const DEFAULT_LI_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-linkedin.svg";
 const DEFAULT_IG_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-instagram.svg";
 const SZ = 124;
+const VERSION = "v2.6 – 2026-06-01";
 
 const ROSE = "#EFA9A9"; const DARK = "#1C1C1C"; const GRAY = "#777";
 const LIGHT = "#F8F6F3"; const BORDER = "#E8E4DF"; const WHITE = "#FFFFFF";
@@ -380,7 +381,8 @@ function HomeScreen({ onChoice }) {
     <div style={{ minHeight:"100vh", background:LIGHT, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
       <img src={DEFAULT_LOGO} alt="LuxModernis" style={{ width:64, height:64, objectFit:"cover", borderRadius:6, marginBottom:28 }} onError={e=>e.target.style.display="none"} />
       <h1 style={{ fontFamily:"Georgia,'Times New Roman',serif", fontSize:30, fontWeight:600, color:DARK, margin:"0 0 8px", textAlign:"center" }}>Signatures LuxModernis</h1>
-      <p style={{ fontSize:14, color:GRAY, margin:"0 0 48px", textAlign:"center" }}>Que souhaitez-vous faire ?</p>
+      <p style={{ fontSize:14, color:GRAY, margin:"0 0 4px", textAlign:"center" }}>Que souhaitez-vous faire ?</p>
+      <p style={{ fontSize:10, color:"#bbb", margin:"0 0 48px", textAlign:"center", fontFamily:"monospace" }}>{VERSION}</p>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, width:"100%", maxWidth:600 }}>
         {[
           { key:"user",  emoji:"✍️", title:"Créer ma signature",  desc:"Choisissez un template et personnalisez vos informations." },
