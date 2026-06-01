@@ -48,22 +48,21 @@ function buildHTML(tpl, user) {
   const liIcon    = tpl.liIconUrl || DEFAULT_LI_ICON;
   const igIcon    = tpl.igIconUrl || DEFAULT_IG_ICON;
 
-  // Largeurs pour le calcul fluide mobile
-  const gifW   = hasGif ? (tpl.gifWidth || sz * 2) : 0;
+  // GIF : calcul depuis le ratio natif (évite toute dépendance async)
+  const gifW   = hasGif ? (tpl.gifAspectRatio ? Math.round(tpl.gifAspectRatio * sz) : (tpl.gifWidth || sz * 2)) : 0;
   const totalW = sz + (hasPhoto ? sz : 0) + gifW;
-  const logoPct  = Math.round(sz / totalW * 100);
-  const photoPct = hasPhoto ? Math.round(sz / totalW * 100) : 0;
-  const gifPct   = hasGif ? (100 - logoPct - photoPct) : 0;
 
-  // Double couche : attributs HTML (Outlook desktop) + CSS width:100%;height:auto (mobile)
-  const aStyle     = `display:block;line-height:0;font-size:0;mso-line-height-rule:exactly;height:${sz}px;max-height:${sz}px;overflow:hidden;`;
-  const tdStyle    = (w, pct) => `padding:0;vertical-align:top;line-height:0;font-size:0;mso-line-height-rule:exactly;height:${sz}px;overflow:hidden;width:${pct}%;`;
-  const logoImgTag = `<img src="${tpl.logoUrl}" width="${sz}" height="${sz}" alt="Logo" style="display:block;width:${sz}px;height:${sz}px;border:0;" />`;
-  const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="${aStyle}">${logoImgTag}</a>` : logoImgTag;
-  const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${sz}" alt="" style="display:block;width:${gifW}px;height:${sz}px;border:0;" />`;
-  const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="${aStyle}">${gifImgTag}</a>` : gifImgTag;
+  // table-layout:fixed + largeurs px → Outlook/WebKit respecte strictement les colonnes
+  const td  = (w) => `padding:0;vertical-align:top;line-height:0;font-size:0;width:${w}px;height:${sz}px;overflow:hidden;`;
+  const a   = `display:block;line-height:0;font-size:0;`;
+  const img = (w, h) => `display:block;width:${w}px;height:${h}px;border:0;`;
 
-  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="width:100%;max-width:${totalW}px;"><tbody><tr><td width="${sz}" height="${sz}" style="${tdStyle(sz, logoPct)}">${logoCell}</td>${hasPhoto ? `<td width="${sz}" height="${sz}" style="${tdStyle(sz, photoPct)}"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="display:block;width:${sz}px;height:${sz}px;border:0;" /></td>` : ""}${hasGif ? `<td width="${gifW}" height="${sz}" style="${tdStyle(gifW, gifPct)}">${gifCell}</td>` : ""}</tr></tbody></table>`;
+  const logoImgTag = `<img src="${tpl.logoUrl}" width="${sz}" height="${sz}" alt="Logo" style="${img(sz,sz)}" />`;
+  const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="${a}">${logoImgTag}</a>` : logoImgTag;
+  const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${sz}" alt="" style="${img(gifW,sz)}" />`;
+  const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="${a}">${gifImgTag}</a>` : gifImgTag;
+
+  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="table-layout:fixed;border-collapse:collapse;width:${totalW}px;"><tbody><tr><td width="${sz}" style="${td(sz)}">${logoCell}</td>${hasPhoto?`<td width="${sz}" style="${td(sz)}"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="${img(sz,sz)}" /></td>`:``}${hasGif?`<td width="${gifW}" style="${td(gifW)}">${gifCell}</td>`:``}</tr></tbody></table>`;
 
   const rows = [];
   if (fullName.trim())
@@ -454,9 +453,10 @@ function UserFlow({ templates, onBack }) {
   const [profileKey,setProfileKey]=useState(""); // clé du profil (ex: bsandrez)
   const fileRef=useRef(null);
 
-  // Mesure le GIF dès qu'un template est sélectionné OU que imageHeight change
+  // Calcul gifWidth pour l'aperçu et la copie — synchrone si gifAspectRatio disponible
   useEffect(()=>{
     if(!tpl||!tpl.showGif||!tpl.gifUrl){setMeasuredGifW(0);return;}
+    if(tpl.gifAspectRatio){setMeasuredGifW(Math.round(tpl.gifAspectRatio*imageHeight));return;}
     const img=new Image();
     img.onload=()=>setMeasuredGifW(Math.round(img.naturalWidth*(imageHeight/img.naturalHeight)));
     img.src=tpl.gifUrl;
@@ -802,16 +802,17 @@ export default function App() {
   const saveTpl=tpl=>{const e=templates.find(t=>t.id===tpl.id);persist(e?templates.map(t=>t.id===tpl.id?tpl:t):[...templates,tpl]);};
   const deleteTpl=id=>persist(templates.filter(t=>t.id!==id));
 
-  // Mesure automatique du gifWidth pour tous les templates qui en ont besoin
+  // Stocke gifAspectRatio (ratio natif) pour tous les templates GIF qui ne l'ont pas encore
   useEffect(()=>{
     if(templates.length===0) return;
-    const toMeasure=templates.filter(t=>t.showGif&&t.gifUrl&&(!t.gifWidth||t.gifWidth===0));
+    const toMeasure=templates.filter(t=>t.showGif&&t.gifUrl&&!t.gifAspectRatio);
     if(toMeasure.length===0) return;
     toMeasure.forEach(t=>{
       const img=new Image();
       img.onload=()=>{
+        const ratio=img.naturalWidth/img.naturalHeight;
         const w=Math.round(img.naturalWidth*((t.imageHeight||SZ)/img.naturalHeight));
-        saveTpl({...t,gifWidth:w});
+        saveTpl({...t,gifWidth:w,gifAspectRatio:ratio});
       };
       img.src=t.gifUrl;
     });
