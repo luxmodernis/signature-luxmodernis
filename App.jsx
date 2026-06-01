@@ -56,14 +56,14 @@ function buildHTML(tpl, user) {
   const gifPct   = hasGif ? (100 - logoPct - photoPct) : 0;
 
   // Double couche : attributs HTML (Outlook desktop) + CSS width:100%;height:auto (mobile)
-  const aStyle     = `display:block;line-height:0;font-size:0;mso-line-height-rule:exactly;`;
-  const tdStyle    = (w, pct) => `padding:0;vertical-align:top;line-height:0;font-size:0;mso-line-height-rule:exactly;width:${pct}%;`;
+  const aStyle     = `display:block;line-height:0;font-size:0;mso-line-height-rule:exactly;height:${sz}px;max-height:${sz}px;overflow:hidden;`;
+  const tdStyle    = (w, pct) => `padding:0;vertical-align:top;line-height:0;font-size:0;mso-line-height-rule:exactly;height:${sz}px;overflow:hidden;width:${pct}%;`;
   const logoImgTag = `<img src="${tpl.logoUrl}" width="${sz}" height="${sz}" alt="Logo" style="display:block;width:100%;height:auto;border:0;" />`;
   const logoCell   = tpl.logoLinkUrl ? `<a href="${tpl.logoLinkUrl}" style="${aStyle}">${logoImgTag}</a>` : logoImgTag;
   const gifImgTag  = `<img src="${tpl.gifUrl}" width="${gifW}" height="${sz}" alt="" style="display:block;width:100%;height:auto;border:0;" />`;
   const gifCell    = tpl.gifLinkUrl  ? `<a href="${tpl.gifLinkUrl}" style="${aStyle}">${gifImgTag}</a>` : gifImgTag;
 
-  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="width:100%;max-width:${totalW}px;"><tbody><tr><td width="${sz}" style="${tdStyle(sz, logoPct)}">${logoCell}</td>${hasPhoto ? `<td width="${sz}" style="${tdStyle(sz, photoPct)}"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="display:block;width:100%;height:auto;border:0;" /></td>` : ""}${hasGif ? `<td width="${gifW}" style="${tdStyle(gifW, gifPct)}">${gifCell}</td>` : ""}</tr></tbody></table>`;
+  const imageTable = `<table cellpadding="0" cellspacing="0" border="0" width="${totalW}" style="width:100%;max-width:${totalW}px;"><tbody><tr><td width="${sz}" height="${sz}" style="${tdStyle(sz, logoPct)}">${logoCell}</td>${hasPhoto ? `<td width="${sz}" height="${sz}" style="${tdStyle(sz, photoPct)}"><img src="${photoSrc}" width="${sz}" height="${sz}" alt="${fullName}" style="display:block;width:100%;height:auto;border:0;" /></td>` : ""}${hasGif ? `<td width="${gifW}" height="${sz}" style="${tdStyle(gifW, gifPct)}">${gifCell}</td>` : ""}</tr></tbody></table>`;
 
   const rows = [];
   if (fullName.trim())
@@ -160,10 +160,11 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
     <div style={{ fontFamily:"Arial, sans-serif" }}>
       {/* Ligne 1 — images jointives */}
       <div style={{ display:"flex", gap:0, lineHeight:0, fontSize:0, marginBottom:0, overflow:"hidden", alignItems:"flex-start" }}>
-        {tpl.logoLinkUrl
-          ? <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0,verticalAlign:"top",height:sz,overflow:"hidden"}}><img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
-          : <img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}} />
-        }
+        {/* Logo — le <a> est en position:absolute pour ne pas perturber le flux flex */}
+        <div style={{position:"relative",flexShrink:0,lineHeight:0,height:sz,overflow:"hidden"}}>
+          <img src={tpl.logoUrl} alt="Logo" height={sz} style={{display:"block",height:sz,width:"auto"}} />
+          {tpl.logoLinkUrl && <a href={tpl.logoLinkUrl} target="_blank" rel="noreferrer" style={{position:"absolute",inset:0}} aria-label="Logo" />}
+        </div>
         {user.showPhoto && (
           photoSrc
             ? <img src={photoSrc} alt={fullName} height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}}/>
@@ -176,10 +177,12 @@ function SigPreview({ tpl, user, showPlaceholder=false }) {
                 </div>
               : null
         )}
+        {/* GIF — même pattern */}
         {hasGif && (
-          tpl.gifLinkUrl
-            ? <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{display:"block",lineHeight:0,flexShrink:0,verticalAlign:"top",height:sz,overflow:"hidden"}}><img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto"}} /></a>
-            : <img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto",flexShrink:0}} />
+          <div style={{position:"relative",flexShrink:0,lineHeight:0,height:sz,overflow:"hidden"}}>
+            <img src={tpl.gifUrl} alt="" height={sz} style={{display:"block",height:sz,width:"auto"}} />
+            {tpl.gifLinkUrl && <a href={tpl.gifLinkUrl} target="_blank" rel="noreferrer" style={{position:"absolute",inset:0}} />}
+          </div>
         )}
       </div>
       {/* Prénom NOM — Arial 14 bold */}
