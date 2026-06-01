@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const DEFAULT_LOGO    = "/IMG/luxmodernis-logo-400x400.png";
+const DEFAULT_LOGO    = "https://signaturelux.netlify.app/IMG/luxmodernis-logo-400x400.png";
 const DEFAULT_GIF     = "https://wesendapps.com/LuxModernis/signature/IMG/GIF-New_Website.gif";
 const DEFAULT_LI_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-linkedin.svg";
 const DEFAULT_IG_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-instagram.svg";
