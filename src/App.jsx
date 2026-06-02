@@ -677,22 +677,6 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
     r.onload=ev=>{try{const data=JSON.parse(ev.target.result);if(!Array.isArray(data))throw new Error();data.forEach(t=>onSave(t));flash(`✓ ${data.length} template(s) importé(s).`);}catch{flash("Fichier invalide.","err");}};
     r.readAsText(f);e.target.value="";
   };
-  const migratePortraits=async()=>{
-    flash("Migration portraits en cours…","ok");
-    try{
-      const res=await fetch("/api/migrate-from-netlify",{method:"POST"});
-      const data=await res.json();
-      flash(`✓ ${data.migrated}/${data.total} portrait(s) migré(s) depuis Netlify !`,"ok");
-    }catch(e){flash("Erreur : "+e.message,"err");}
-  };
-  const migrateProfiles=async()=>{
-    flash("Migration profils en cours…","ok");
-    try{
-      const res=await fetch("/api/migrate-profiles-from-netlify",{method:"POST"});
-      const data=await res.json();
-      flash(`✓ ${data.migrated}/${data.total} profil(s) migré(s) depuis Netlify !`,"ok");
-    }catch(e){flash("Erreur : "+e.message,"err");}
-  };
 
   if(view==="list") return(
     <div style={{minHeight:"100vh",background:LIGHT,display:"flex",flexDirection:"column"}}>
@@ -704,8 +688,6 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
             <button onClick={exportJSON} style={gs("ghost")}>⬇ Exporter templates.json</button>
             <button onClick={()=>importRef.current?.click()} style={gs("ghost")}>⬆ Importer</button>
             <input type="file" accept=".json" ref={importRef} onChange={importFile} style={{display:"none"}}/>
-            <button onClick={migratePortraits} style={gs("ghost")}>↔ Migrer portraits Netlify</button>
-            <button onClick={migrateProfiles} style={gs("ghost")}>↔ Migrer profils Netlify</button>
           </div>
           <button onClick={()=>{setEditing({...blankTemplate,id:Date.now()});setView("edit");}} style={gs("primary")}>+ Nouveau template</button>
         </div>
