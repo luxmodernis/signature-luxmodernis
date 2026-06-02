@@ -680,11 +680,19 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
     r.readAsText(f);e.target.value="";
   };
   const migratePortraits=async()=>{
-    flash("Migration en cours…","ok");
+    flash("Migration portraits en cours…","ok");
     try{
       const res=await fetch("/api/migrate-from-netlify",{method:"POST"});
       const data=await res.json();
       flash(`✓ ${data.migrated}/${data.total} portrait(s) migré(s) depuis Netlify !`,"ok");
+    }catch(e){flash("Erreur : "+e.message,"err");}
+  };
+  const migrateProfiles=async()=>{
+    flash("Migration profils en cours…","ok");
+    try{
+      const res=await fetch("/api/migrate-profiles-from-netlify",{method:"POST"});
+      const data=await res.json();
+      flash(`✓ ${data.migrated}/${data.total} profil(s) migré(s) depuis Netlify !`,"ok");
     }catch(e){flash("Erreur : "+e.message,"err");}
   };
 
@@ -699,6 +707,7 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
             <button onClick={()=>importRef.current?.click()} style={gs("ghost")}>⬆ Importer</button>
             <input type="file" accept=".json" ref={importRef} onChange={importFile} style={{display:"none"}}/>
             <button onClick={migratePortraits} style={gs("ghost")}>↔ Migrer portraits Netlify</button>
+            <button onClick={migrateProfiles} style={gs("ghost")}>↔ Migrer profils Netlify</button>
           </div>
           <button onClick={()=>{setEditing({...blankTemplate,id:Date.now()});setView("edit");}} style={gs("primary")}>+ Nouveau template</button>
         </div>
