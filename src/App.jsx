@@ -719,9 +719,12 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
                         {done&&<span style={{fontSize:11,color:GRAY}}>{expanded===name?"▲":"▼"}</span>}
                         {!done&&<span style={{fontSize:10,color:"#bbb"}}>pas encore</span>}
                       </div>
-                      {expanded===name&&entry?.html&&(
+                      {expanded===name&&(
                         <div style={{borderTop:`1px solid #a8e6be`,padding:"16px 14px",background:WHITE}}>
-                          <div dangerouslySetInnerHTML={{__html:entry.html}}/>
+                          {entry?.html
+                            ? <div dangerouslySetInnerHTML={{__html:entry.html}}/>
+                            : <p style={{margin:0,fontSize:11,color:GRAY,fontStyle:"italic"}}>Aperçu non disponible — re-copie ta signature depuis l'app pour l'enregistrer.</p>
+                          }
                         </div>
                       )}
                     </div>
