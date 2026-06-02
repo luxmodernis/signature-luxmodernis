@@ -690,7 +690,7 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
       <Nav onBack={onBack} title="Gérer les templates" step="Créez et modifiez les templates de votre équipe"/>
       {showLog&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowLog(false)}>
-          <div style={{background:WHITE,borderRadius:12,padding:28,width:"100%",maxWidth:420,maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+          <div style={{background:WHITE,borderRadius:12,padding:28,width:"100%",maxWidth:700,maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
               <div>
                 <div style={{fontFamily:"Georgia,serif",fontSize:18,fontWeight:600,color:DARK}}>Suivi des signatures</div>
