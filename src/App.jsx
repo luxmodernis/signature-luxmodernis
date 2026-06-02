@@ -5,7 +5,7 @@ const DEFAULT_GIF     = "https://wesendapps.com/LuxModernis/signature/IMG/GIF-Ne
 const DEFAULT_LI_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-linkedin.svg";
 const DEFAULT_IG_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-instagram.svg";
 const SZ = 124;
-const VERSION = "v2.6 – 2026-06-01";
+const VERSION = `Build ${__BUILD_DATE__}`;
 
 const ROSE = "#EFA9A9"; const DARK = "#1C1C1C"; const GRAY = "#777";
 const LIGHT = "#F8F6F3"; const BORDER = "#E8E4DF"; const WHITE = "#FFFFFF";
@@ -450,7 +450,7 @@ function UserFlow({ templates, onBack }) {
   const [user,setUser]=useState({...blankUser}); const [cropSrc,setCropSrc]=useState(null);
   const [msg,setMsg]=useState(""); const [msgType,setMsgType]=useState("ok");
   const [measuredGifW,setMeasuredGifW]=useState(0);
-  const [imageHeight,setImageHeight]=useState(124);
+  const [imageHeight,setImageHeight]=useState(SZ); // Normal 124px par défaut
   const [existingPortrait,setExistingPortrait]=useState(null); // URL si portrait déjà hébergé
   const [profileKey,setProfileKey]=useState(""); // clé du profil (ex: bsandrez)
   const fileRef=useRef(null);
