@@ -716,7 +716,8 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
                             {entry.templateName&&<span> · {entry.templateName}</span>}
                           </div>}
                         </div>
-                        {done&&<span style={{fontSize:11,color:GRAY}}>{expanded===name?"▲":"▼"}</span>}
+                        {done&&<span style={{fontSize:11,color:GRAY,marginRight:4}}>{expanded===name?"▲":"▼"}</span>}
+                        {done&&<span onClick={async e=>{e.stopPropagation();if(!confirm(`Supprimer l'entrée de ${name} ?`))return;await fetch("/api/delete-log-entry",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({firstName:name})});setLog(l=>l.filter(x=>norm(x.firstName)!==norm(name)));setExpanded(null);}} style={{fontSize:11,color:"#c44",border:"1px solid #fcc",borderRadius:4,padding:"1px 6px",cursor:"pointer"}} title="Supprimer">×</span>}
                         {!done&&<span style={{fontSize:10,color:"#bbb"}}>pas encore</span>}
                       </div>
                       {expanded===name&&(
