@@ -6,6 +6,7 @@ const DEFAULT_LI_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-l
 const DEFAULT_IG_ICON = "https://wesendapps.com/LuxModernis/signature/IMG/icon-instagram.svg";
 const SZ = 124;
 const VERSION = `Build ${__BUILD_DATE__}`;
+const TEAM = ["Laurent","Karine","Dounia","Hervé","Mathilde","Léa","Rubie","Eva","Nicolas","Bertrand","Lorraine","Amélie","Florence"];
 
 const ROSE = "#EFA9A9"; const DARK = "#1C1C1C"; const GRAY = "#777";
 const LIGHT = "#F8F6F3"; const BORDER = "#E8E4DF"; const WHITE = "#FFFFFF";
@@ -503,8 +504,8 @@ function UserFlow({ templates, onBack }) {
     try{
       await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"})})]);
       flash("✓ Signature copiée ! Collez-la dans votre client mail.","ok");
-    // Sauvegarde profil en arrière-plan (fire and forget)
-    if(profileKey) fetch("/api/save-profile",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:profileKey,role:user.role,phone:user.phone})}).catch(()=>{});
+      fetch("/api/log-signature",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({firstName:user.firstName,lastName:user.lastName,templateName:tpl.name,html})}).catch(()=>{});
+      if(profileKey) fetch("/api/save-profile",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:profileKey,role:user.role,phone:user.phone})}).catch(()=>{});
     }catch{
       try{
         const d=document.createElement("div");d.innerHTML=html;d.style.cssText="position:fixed;left:-9999px";
@@ -659,8 +660,14 @@ function UserFlow({ templates, onBack }) {
 function AdminFlow({ templates, onSave, onDelete, onBack }) {
   const [view,setView]=useState("list"); const [editing,setEditing]=useState(null);
   const [msg,setMsg]=useState(""); const [msgType,setMsgType]=useState("ok");
+  const [showLog,setShowLog]=useState(false); const [log,setLog]=useState(null); const [expanded,setExpanded]=useState(null);
   const importRef=useRef(null);
   const flash=(t,k="ok")=>{setMsg(t);setMsgType(k);setTimeout(()=>setMsg(""),4500);};
+  const openLog=async()=>{
+    setShowLog(true);
+    try{const r=await fetch("/api/get-log");setLog(await r.json());}catch{setLog([]);}
+  };
+  const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
   const set=(k,v)=>setEditing(e=>({...e,[k]:v}));
 
   const saveEditing=async()=>{
@@ -681,6 +688,50 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
   if(view==="list") return(
     <div style={{minHeight:"100vh",background:LIGHT,display:"flex",flexDirection:"column"}}>
       <Nav onBack={onBack} title="Gérer les templates" step="Créez et modifiez les templates de votre équipe"/>
+      {showLog&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowLog(false)}>
+          <div style={{background:WHITE,borderRadius:12,padding:28,width:"100%",maxWidth:420,maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div>
+                <div style={{fontFamily:"Georgia,serif",fontSize:18,fontWeight:600,color:DARK}}>Suivi des signatures</div>
+                {log&&<div style={{fontSize:11,color:GRAY,marginTop:3}}>{log.length}/{TEAM.length} membres ont généré leur signature</div>}
+              </div>
+              <button onClick={()=>setShowLog(false)} style={{...gs("ghost"),padding:"4px 10px",fontSize:16}}>×</button>
+            </div>
+            {!log
+              ?<div style={{textAlign:"center",padding:"20px 0",color:GRAY,fontSize:13}}>Chargement…</div>
+              :<div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {TEAM.map(name=>{
+                  const entry=log.find(e=>norm(e.firstName)===norm(name));
+                  const done=!!entry;
+                  return(
+                    <div key={name} style={{borderRadius:8,background:done?"#f0fff6":LIGHT,border:`1px solid ${done?"#a8e6be":BORDER}`,overflow:"hidden"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",cursor:done?"pointer":"default"}}
+                        onClick={()=>done&&setExpanded(expanded===name?null:name)}>
+                        <span style={{fontSize:18}}>{done?"✅":"⏳"}</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:13,fontWeight:600,color:DARK}}>{name}{entry?.lastName?" "+entry.lastName:""}</div>
+                          {done&&<div style={{fontSize:10,color:GRAY,marginTop:2}}>
+                            {new Date(entry.date).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"Europe/Paris"})}
+                            {entry.templateName&&<span> · {entry.templateName}</span>}
+                          </div>}
+                        </div>
+                        {done&&<span style={{fontSize:11,color:GRAY}}>{expanded===name?"▲":"▼"}</span>}
+                        {!done&&<span style={{fontSize:10,color:"#bbb"}}>pas encore</span>}
+                      </div>
+                      {expanded===name&&entry?.html&&(
+                        <div style={{borderTop:`1px solid #a8e6be`,padding:"16px 14px",background:WHITE}}>
+                          <div dangerouslySetInnerHTML={{__html:entry.html}}/>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            }
+          </div>
+        </div>
+      )}
       <div style={{padding:"28px 28px 60px",flex:1}}>
         <Flash msg={msg} type={msgType}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10,maxWidth:1020,margin:"0 auto 16px"}}>
@@ -689,6 +740,7 @@ function AdminFlow({ templates, onSave, onDelete, onBack }) {
             <button onClick={()=>importRef.current?.click()} style={gs("ghost")}>⬆ Importer</button>
             <input type="file" accept=".json" ref={importRef} onChange={importFile} style={{display:"none"}}/>
           </div>
+          <button onClick={openLog} style={gs("ghost")}>👥 Suivi signatures</button>
           <button onClick={()=>{setEditing({...blankTemplate,id:Date.now()});setView("edit");}} style={gs("primary")}>+ Nouveau template</button>
         </div>
         {templates.length===0
