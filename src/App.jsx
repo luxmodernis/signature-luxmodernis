@@ -381,8 +381,7 @@ function HomeScreen({ onChoice }) {
     <div style={{ minHeight:"100vh", background:LIGHT, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
       <img src={DEFAULT_LOGO} alt="LuxModernis" style={{ width:64, height:64, objectFit:"cover", borderRadius:6, marginBottom:28 }} onError={e=>e.target.style.display="none"} />
       <h1 style={{ fontFamily:"Georgia,'Times New Roman',serif", fontSize:30, fontWeight:600, color:DARK, margin:"0 0 8px", textAlign:"center" }}>Signatures LuxModernis</h1>
-      <p style={{ fontSize:14, color:GRAY, margin:"0 0 4px", textAlign:"center" }}>Que souhaitez-vous faire ?</p>
-      <p style={{ fontSize:10, color:"#bbb", margin:"0 0 48px", textAlign:"center", fontFamily:"monospace" }}>{VERSION}</p>
+      <p style={{ fontSize:14, color:GRAY, margin:"0 0 48px", textAlign:"center" }}>Que souhaitez-vous faire ?</p>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, width:"100%", maxWidth:600 }}>
         {[
           { key:"user",  emoji:"✍️", title:"Créer ma signature",  desc:"Choisissez un template et personnalisez vos informations." },
@@ -398,6 +397,7 @@ function HomeScreen({ onChoice }) {
           </button>
         ))}
       </div>
+      <p style={{ position:"fixed", bottom:12, right:16, fontSize:9, color:"#ccc", margin:0, fontFamily:"monospace" }}>{VERSION}</p>
     </div>
   );
 }
